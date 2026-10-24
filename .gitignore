@@ -1,0 +1,7 @@
+.env*
+node_modules/
+*.zip
+*.tar.gz
+*-cache.json
+*-fonte.json
+Controle Único - finanças.json
