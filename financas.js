@@ -20,7 +20,7 @@ function render(){
   const km=$('mes').value, a=registros(), s=F.resumo(a,km);
   const aberto=dados.registros.length>0 || caderno.conferido();
   $('pago').textContent=aberto?dinheiro(s.pago):'—';$('apagar').textContent=aberto?dinheiro(s.aPagar):'—';$('semvalor').textContent=aberto?s.semValor:'—';
-  $('somente-local').hidden=!dados.registros.length || (configOk && Nuvem.conectado() && !caderno.pendente());
+  $('somente-local').hidden=!dados.registros.length || (configOk && Nuvem.conectado() && !caderno.pendente() && caderno.conferido());
   $('opcoes-categorias').innerHTML=categorias().map(c=>'<option value="'+esc(c)+'"></option>').join('');
   const termo=$('busca').value.toLocaleLowerCase('pt-BR'), filtro=$('filtro').value;
   const doMes=a.filter(r=>F.referencia(r)===km);
@@ -86,4 +86,5 @@ $('fechar-ofx').onclick=()=>$('importador').close();
 $('confirmar-ofx').onclick=()=>{try{const escolhas=[];document.querySelectorAll('[data-ofx]').forEach(el=>{const acao=el.querySelector('[data-acao]').value;if(acao==='ignorar')return;const x=plano.novos[Number(el.dataset.ofx)],r={...x.registro,categoria:el.querySelector('[data-cat]').value.trim()};escolhas.push({registro:r,vincular:acao==='novo'?null:acao});});if(!escolhas.length)throw new Error('Escolha ao menos um débito para importar.');dados=F.aplicarOFX(dados,escolhas);salvar();$('importador').close();mensagem(escolhas.length+' débitos confirmados. Confira o salvamento no Drive.');}catch(err){$('erro-ofx').textContent=err.message;}};
 Nuvem.iniciar();
 if(!configOk){$('nuvem-entrar').disabled=true;$('nuvem-entrar').textContent='Conexão em preparação';$('nuvem-texto').textContent='Seus dados estão no Drive. Falta autorizar a conexão deste aplicativo.';}
+new MutationObserver(()=>{ $('somente-local').hidden=!dados.registros.length || (configOk && Nuvem.conectado() && !caderno.pendente() && caderno.conferido()); }).observe($('nuvem-texto'),{childList:true,subtree:true});
 render();
