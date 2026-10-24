@@ -452,6 +452,8 @@ var Nuvem = (function(){
 
   /* ---------------- um caderno = um arquivo no Drive ---------------- */
   function Caderno(op){
+    if(op.criarVazio === undefined) op.criarVazio = false;
+    if(op.copiaSemanal === undefined) op.copiaSemanal = false;
     var c = this;
     c.id = op.id;
     var CH_P = "controle-unico-" + op.id + "-pendente";   // mudança feita aqui que o Drive ainda não tem
@@ -643,7 +645,7 @@ var Nuvem = (function(){
             return;
           }
           if(op.temDados(local)) return criarNovo();
-          if(op.criarVazio === false){ estado(op.textoSemArquivo || "Ainda não há caderno no Drive.", "erro"); return; }
+          if(op.criarVazio === false){ estado(op.textoSemArquivo || "Caderno vazio: nenhum dado para enviar ao Drive.", "vazio"); return; }
           return criarNovo();
         }
         var driveMudou = !arquivo || arquivo.id !== achado.id || arquivo.modifiedTime !== achado.modifiedTime;
@@ -742,7 +744,7 @@ var Nuvem = (function(){
   var aviso = null, avisoAte = 0;
   function avisoGeral(t){ aviso = t; avisoAte = Date.now() + 20000; desenhar(); setTimeout(desenhar, 20100); }
   function pior(){
-    var lista = cadernos.map(function(c){ return estados[c.id]; }).filter(Boolean);
+    var lista = cadernos.map(function(c){ return estados[c.id]; }).filter(function(x){ return x && x.tipo !== "vazio"; });
     return lista.filter(function(x){ return x.tipo === "escolha"; })[0] || lista.filter(function(x){ return x.tipo === "erro"; })[0] ||
            lista.filter(function(x){ return x.tipo === "indo"; })[0] ||
            lista.slice().sort(function(a, b){ return b.t - a.t; })[0] || null;

@@ -1,0 +1,2320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script src="config.js?v=20261024-original-2"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f6f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10141a" media="(prefers-color-scheme: dark)">
+<title>Dinheiro e Casa · Controle Único</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="stylesheet" href="tema.css?v=20261024-original-2">
+<style>
+/* toque: o navegador não espera para ver se é duplo toque, e o dedo acerta o alvo */
+button,a,summary,select,input,label{touch-action:manipulation}
+/* Mesmo desenho da Clínica e da Carteira (27/09/2026): fundo cinza-azulado, painéis brancos
+   de borda fina, números em negrito e gráficos em rosca. O jeito de app fica só no celular. */
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1200px;margin:0 auto;padding:4px 24px 56px}
+.hidden{display:none !important}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .warn{color:var(--warn)}
+.nota{font-size:12.5px;color:var(--faint)}
+.vazio{color:var(--muted);font-size:14px;padding:8px 0}
+
+/* topo: marca, estado do Drive, tema */
+.topo{max-width:1200px;margin:0 auto;padding:12px 24px 4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.marca{font-weight:700;margin-right:auto}
+.nuvem{font-size:12.5px;color:var(--faint);display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0}
+.nuvem-ponto{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
+.nuvem-ponto.ok{background:#2f9e5b} .nuvem-ponto.indo{background:#d49a1c} .nuvem-ponto.erro{background:#d0453a}
+#nuvem-acoes{display:flex;gap:6px;flex-wrap:wrap}
+#nuvem-texto{flex:1 1 0;min-width:0}
+nav.abas{display:flex;gap:4px;margin:12px 0 4px}
+nav.abas button{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer}
+nav.abas button[aria-pressed="true"]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:inset 0 0 0 1px var(--line)}
+
+/* botões */
+.b{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:7px 12px;cursor:pointer;font-size:14px}
+.b:hover{border-color:var(--faint)}
+.b.p{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:600}
+.b.s{font-size:13px;padding:5px 10px}
+.redondo{width:34px;height:34px;padding:0;display:inline-grid;place-items:center;font-size:17px}
+
+/* mês */
+.mes{display:flex;align-items:center;gap:10px;margin:10px 0 16px}
+.mes h1{margin:0;font-size:21px;font-weight:700;letter-spacing:-.01em;text-transform:capitalize;min-width:170px;text-align:center}
+.mes h1 span{color:var(--faint);font-weight:400}
+
+/* painéis */
+.painel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;min-width:0}
+.painel h2{margin:0 0 14px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.painel h2 .dir{margin-left:auto;font-weight:400;font-size:13px;color:var(--faint)}
+.duas{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;margin-top:18px}
+.duas.igual{grid-template-columns:1fr 1fr}
+.duas.larga{grid-template-columns:1.75fr 1fr;align-items:start}
+.duas.inv{grid-template-columns:1fr 1.35fr}
+.coluna{display:grid;gap:18px;align-content:start;min-width:0}
+
+/* situação do mês */
+.situ{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:stretch}
+.situ > .veredito{order:2}   /* no HTML vem primeiro (é o que se lê primeiro no celular); no computador fica à direita */
+.situ > .nums{min-width:0}
+.linha-k{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.linha-k + .linha-k{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
+.k span{display:block;color:var(--muted);font-size:13px}
+.k b{display:block;font-size:26px;font-weight:700;letter-spacing:-.01em;line-height:1.2;margin-top:2px;white-space:nowrap}
+.k small{display:block;color:var(--faint);font-size:12px;margin-top:3px}
+.k.destaque b{font-size:32px}
+.k .pct-k{display:inline-block;font-style:normal;font-size:11.5px;font-weight:600;margin:4px 0 2px;padding:1px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.k .pct-k.neg{background:var(--neg-soft);color:var(--neg)}
+.veredito{border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;justify-content:center;gap:10px;background:var(--surface-2)}
+.veredito.pos{background:var(--pos-soft)} .veredito.neg{background:var(--neg-soft)} .veredito.warn{background:var(--warn-soft)}
+.veredito .topo-v{display:flex;align-items:center;gap:12px}
+.seta{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--surface)}
+.seta svg{width:26px;height:26px}
+.veredito b{font-size:19px;line-height:1.2}
+.veredito p{margin:0;font-size:13.5px;color:var(--text)}
+.veredito.pos b,.veredito.pos .seta{color:var(--pos)} .veredito.neg b,.veredito.neg .seta{color:var(--neg)} .veredito.warn b,.veredito.warn .seta{color:var(--warn)}
+
+/* rosca */
+.rosca{display:grid;grid-template-columns:170px minmax(0,1fr);gap:20px;align-items:center}
+.rosca > svg{width:170px;height:170px;display:block}
+.rosca .centro1{fill:var(--muted);font-size:11px;font-family:var(--font)}
+.rosca .centro2{fill:var(--text);font-size:16px;font-weight:700;font-family:var(--font)}
+.fatia{transition:opacity .12s}
+.rosca > svg:hover .fatia:not(:hover),.rosca.foco .fatia:not(.on){opacity:.35}
+.leg{list-style:none;margin:0;padding:0;font-size:14px}
+.leg li{display:flex;gap:8px;align-items:baseline;padding:5px 4px;border-top:1px solid var(--line);border-radius:4px}
+.leg li:first-child{border-top:0}
+.leg li:hover{background:var(--surface-2)}
+.leg i{width:10px;height:10px;border-radius:3px;flex:none;align-self:center}
+.leg .n{flex:1;min-width:0}
+.leg .n small{display:block;color:var(--faint);font-size:11.5px;white-space:normal}
+.leg b{font-weight:600;white-space:nowrap}
+.leg .pc{color:var(--faint);font-size:12px;min-width:44px;text-align:right}
+/* rosca em painel estreito (coluna da direita): o gráfico em cima e a legenda embaixo */
+.painel{container-type:inline-size}
+@container (max-width:460px){ .rosca{grid-template-columns:minmax(0,1fr);justify-items:center} .leg{width:100%;min-width:0} }
+.leg .n{overflow-wrap:anywhere}
+.partes .pt-total span{display:block;color:var(--muted);font-size:13px}
+.partes .pt-total b{display:block;font-size:26px;font-weight:700;letter-spacing:-.01em}
+.pilha{display:flex;gap:2px;height:14px;border-radius:7px;overflow:hidden;margin:10px 0 8px;background:var(--surface-2)}
+.pilha i{display:block;height:100%;min-width:3px}
+.meta-r{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.meta-r .l1{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--muted)}
+.meta-r .l1 b{color:var(--text);font-size:14px}
+.meta-r small{display:block;color:var(--faint);font-size:12px;margin-top:4px}
+.selo-b{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--surface-2);color:var(--text)}
+
+/* números soltos (como na Clínica) */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;min-width:0}
+.painel .stat{background:var(--surface-2);border-color:transparent}
+.stat span{display:block;color:var(--muted);font-size:12px}
+.stat b{display:block;font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat small{display:block;color:var(--faint);font-size:11.5px}
+.stats.duas-col{grid-template-columns:repeat(2,minmax(0,1fr))}
+.trilho{height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+.painel .stat .trilho{background:var(--line)}
+.trilho i{display:block;height:100%;background:var(--c3);border-radius:3px}
+
+/* tabelas */
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th{text-align:left;color:var(--muted);font-weight:500;font-size:12.5px;padding:0 8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t th:first-child,table.t td:first-child{padding-left:0}
+table.t th:last-child,table.t td:last-child{padding-right:0}
+table.t .dir{text-align:right;white-space:nowrap}
+table.t tr:last-child td{border-bottom:0}
+table.t tbody tr:hover td{background:var(--surface-2)}
+td.c-data{color:var(--muted);white-space:nowrap;width:1%}
+td.c-desc b{font-weight:500}
+td.c-cat,td.c-forma{color:var(--muted)}
+td.c-val{font-weight:600}
+td.c-val.pos{color:var(--pos)}
+td.c-x{width:1%}
+table.t input{width:84px;padding:5px 8px;text-align:right}
+table.t input.dia{width:58px}
+.so-cel{display:none}
+.fx-sit{display:block;font-size:11.5px;color:var(--faint)}
+.fx-sit.ok{color:var(--muted)} .fx-sit.vai{color:var(--warn);font-weight:600}
+tr.fx-fora td.c-desc b,tr.fx-fora td.c-cat{color:var(--faint)}
+.quem{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.quem i{width:9px;height:9px;border-radius:50%}
+.x{border:0;background:transparent;color:var(--faint);cursor:pointer;font-size:18px;padding:0 4px;line-height:1}
+.x:hover{color:var(--neg)}
+.x.lapis{font-size:14px} .x.lapis:hover{color:var(--accent)}
+td.c-x{white-space:nowrap}
+tr.clic{cursor:pointer}
+tr.clic:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* pendências: uma linha por dívida, com quem, quanto falta e os botões */
+.pd-grupo{margin:14px 0 4px;font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:flex;gap:10px;align-items:baseline}
+.pd-grupo span{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600;color:var(--text);font-size:14px}
+.pd{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.pd b{font-weight:600} .pd span{display:block;font-size:12px;color:var(--muted)}
+.pd .pd-quem b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd .pd-val{text-align:right;white-space:nowrap}
+.pd .pd-acoes{display:flex;gap:6px;align-items:center}
+.pd.feita b{color:var(--muted);font-weight:500}
+.pd .trilho{margin-top:4px}
+.cat-minhas{list-style:none;margin:0 0 10px;padding:0}
+.cat-minhas li{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.cat-minhas li span{color:var(--muted);font-size:13px;margin-right:auto}
+.pd-parte{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:var(--surface-2);border-radius:var(--radius);padding:10px}
+.pd-parte label{display:grid;gap:4px;font-size:12.5px;color:var(--muted)} .pd-parte input{width:140px}
+/* aviso de erro dentro do formulário, junto do botão (no lugar da janelinha do navegador, 19/10/2026) */
+.form-erro{grid-column:1/-1;flex-basis:100%;margin:0;font-size:13.5px;font-weight:600;color:var(--neg)}
+.form-erro:empty{display:none}
+/* recado da tela (resultado de importar, erro de leitura): fica embaixo, some sozinho */
+.recado{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;max-width:min(560px,calc(100vw - 32px));
+  display:flex;gap:12px;align-items:center;background:var(--text);color:var(--bg);border-radius:10px;padding:10px 12px 10px 16px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.recado.erro{background:var(--neg);color:#fff}
+.recado button{border:0;background:transparent;color:inherit;font-size:20px;line-height:1;cursor:pointer;min-width:32px;min-height:32px}
+details.pd-fechadas{margin-top:12px} details.pd-fechadas summary{cursor:pointer;font-size:13px;color:var(--muted)}
+@container (max-width:560px){ .pd{grid-template-columns:minmax(0,1fr) auto} .pd .pd-acoes{grid-column:1 / -1} }
+/* as vistas do Dinheiro (01/10/2026): Lançamentos, Gastos fixos, Pendências e Mês a mês, cada uma na sua tela */
+.subabas{display:flex;gap:2px;margin:12px 0 4px;box-shadow:inset 0 -1px 0 var(--line);overflow-x:auto;scrollbar-width:none}
+.subabas::-webkit-scrollbar{display:none}
+.subabas button{border:0;background:transparent;color:var(--muted);padding:9px 14px;cursor:pointer;font-size:14px;white-space:nowrap}
+.subabas button:hover{color:var(--text)}
+tr.mes-cab th{text-align:left;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:16px 8px 6px;border-bottom:1px solid var(--line);background:transparent}
+tr.mes-cab th span{font-weight:500;letter-spacing:0;text-transform:none}
+.subabas button[aria-pressed="true"]{color:var(--text);font-weight:600;box-shadow:inset 0 -2px 0 var(--text)}
+.subabas button em{font-style:normal;font-size:11.5px;font-weight:600;margin-left:6px;padding:1px 7px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
+.stats.tres{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:14px}
+.bloco{margin-top:18px}
+.fx-grupos > .bloco:first-child{margin-top:0}
+/* as tabelas dos grupos de fixos com as mesmas colunas, para um grupo alinhar com o outro */
+table.fixos{table-layout:fixed}
+.painel + .lanc{margin-top:16px}
+.aviso-fx{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.aviso-fx p{margin:0}
+table.fixos th:nth-child(2){width:30%} table.fixos th:nth-child(3){width:90px} table.fixos th:nth-child(4){width:170px} table.fixos th:nth-child(5){width:30px}
+details.fx-fora-d > summary{cursor:pointer;font-size:14px;color:var(--muted)}
+details.fx-fora-d[open] > summary{margin-bottom:12px}
+/* mês a mês em lista: um mês por linha, com o que sobrou à direita */
+.hm{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:4px 14px;align-items:baseline;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;padding:10px 4px;cursor:pointer;border-radius:0}
+.hm:first-child{border-top:0}
+.hm:hover{background:var(--surface-2)}
+.hm .hm-m{font-weight:600;text-transform:capitalize}
+.hm .hm-d{color:var(--muted);font-size:13px}
+.hm b{white-space:nowrap}
+.hm b small{font-weight:400;color:var(--faint);font-size:12px;margin-right:6px}
+/* formulários atrás de um botão */
+details.novo{margin:0 0 12px}
+details.novo > summary{list-style:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:var(--radius);font-size:14px}
+details.novo > summary:hover{border-color:var(--faint)}
+details.novo > summary::-webkit-details-marker{display:none}
+details.novo[open] > summary{margin-bottom:10px}
+form.linha{background:var(--surface-2);border-radius:var(--radius);padding:12px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));align-items:end}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--text)}
+/* a escolha Pessoal ou Casa dentro do formulário único de lançamento (01/10/2026) */
+.chave{display:inline-flex;gap:4px;padding:4px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.chave button{border:0;background:transparent;color:var(--muted);padding:6px 16px;border-radius:7px;cursor:pointer;font-size:14px}
+.chave button[aria-pressed="true"]{background:var(--text);color:var(--bg);font-weight:600}
+/* ordenar a lista: no computador pelo cabeçalho, no celular por uma caixa de escolha */
+th .ord{border:0;background:transparent;color:inherit;font:inherit;padding:0;cursor:pointer}
+th .ord:hover{color:var(--text)}
+th .ord[aria-pressed="true"]{color:var(--text);font-weight:700}
+.ordem-cel{display:none;margin:0 0 6px;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.ordem-cel select{width:auto;flex:1;padding:6px 8px}
+.filtro-cat{display:flex;margin:0 0 6px;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.filtro-cat select{width:auto;flex:0 1 240px;min-width:0;padding:6px 8px}
+.filtro-cat span{color:var(--text);font-weight:600;white-space:nowrap}
+.fe-al{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.fe-al li,.fe-cat li{color:var(--text)}
+.fe-al li{display:flex;gap:10px;align-items:baseline;font-size:14px}
+.fe-al li i{flex:none;width:9px;height:9px;border-radius:99px;background:var(--faint);transform:translateY(-1px)}
+.fe-al li.warn i{background:var(--warn)} .fe-al li.pos i{background:var(--pos)}
+.fe-cat{list-style:none;margin:0;padding:0}
+.fe-cat li{display:grid;grid-template-columns:minmax(0,1fr) auto 108px;gap:2px 12px;align-items:baseline;padding:8px 2px;border-top:1px solid var(--line);font-size:14px}
+.fe-cat li:first-child{border-top:0}
+.fe-cat .n{min-width:0;overflow-wrap:anywhere} .fe-cat .n small{display:block;color:var(--muted);font-size:12px}
+.fe-cat b{white-space:nowrap;font-weight:600} .fe-cat li > small{white-space:nowrap;color:var(--muted);font-size:12.5px;text-align:right}
+.fe-cat li.warn > small{color:var(--warn);font-weight:600} .fe-cat li.pos > small{color:var(--pos);font-weight:600}
+.fe-cat li:not(:has(> small)){grid-template-columns:minmax(0,1fr) auto}
+.fe-aviso{margin-bottom:16px}
+/* O que precisa de você (aba Tudo) */
+.pv{margin-bottom:16px}
+.pv h2{margin-bottom:8px}
+.pv-n{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--neg-soft);color:var(--neg);font-weight:700;font-size:12px}
+.pv-l{list-style:none;margin:0;padding:0}
+.pv-l li{border-top:1px solid var(--line)} .pv-l li:first-child{border-top:0}
+.pv-i{display:flex;align-items:center;gap:12px;width:100%;padding:10px 4px;border:0;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer;border-radius:8px}
+.pv-i:hover{background:var(--surface-2)}
+.pv-i > i{flex:none;width:10px;height:10px;border-radius:99px;background:var(--faint)}
+.pv-l li.urgente .pv-i > i{background:var(--neg)} .pv-l li.atencao .pv-i > i{background:var(--warn)}
+.pv-t{flex:1;min-width:0;display:grid;gap:2px}
+.pv-t b{font-weight:600;font-size:14.5px;overflow-wrap:anywhere}
+.pv-t small{color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}
+.pv-t small em{font-style:normal;font-weight:600;color:var(--text)}
+.pv-seta{flex:none;width:18px;height:18px;color:var(--faint)}
+.pv-mais summary{cursor:pointer;color:var(--muted);font-size:13px;padding:10px 4px;min-height:40px}
+.pv-mais .pv-l{border-top:1px solid var(--line)}
+.pv-nota{margin:6px 0 0}
+.pv-ok{padding-block:12px}
+.pv-ok p{margin:0;display:flex;align-items:center;gap:10px;font-size:14px}
+.pv-ok b{font-weight:600}
+.pv-ok-i{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:99px;background:var(--pos-soft);color:var(--pos);font-size:13px;font-weight:700}
+.k small.pos{color:var(--pos);font-weight:600} .k small.warn{color:var(--warn);font-weight:600}
+.lim{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:12px}
+.lim li{display:grid;gap:4px}
+.lim .l1{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}
+.lim .l1 b{font-weight:600} .lim .l1 span{white-space:nowrap;color:var(--muted);font-size:13px}
+.lim .trilho{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.lim .trilho i{display:block;height:100%;border-radius:99px;background:var(--pos)}
+.lim .perto .trilho i{background:var(--warn)} .lim .passou .trilho i{background:var(--neg)}
+.lim .l2{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--muted)}
+.lim .perto .l2 b{color:var(--warn)} .lim .passou .l2 b{color:var(--neg)}
+.lim .l2 button{border:0;background:transparent;color:var(--faint);font:inherit;cursor:pointer;padding:0;text-decoration:underline}
+details.origem{margin-top:22px;font-size:12.5px;color:var(--muted);line-height:1.6}
+details.origem summary{cursor:pointer;color:var(--faint)}
+.pe{margin-top:28px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+/* dentro da casca: o botão de entrar, a marca, o tema e as abas ficam na barra de cima */
+.na-casca #nuvem-entrar,.na-casca .marca,.na-casca #tema,.na-casca nav.abas{display:none !important}
+
+@media (max-width:960px){
+  .duas,.duas.igual,.duas.larga,.duas.inv{grid-template-columns:1fr}
+  .situ{grid-template-columns:1fr;gap:16px}
+  .situ > .veredito{order:0}
+}
+/* ---------- celular: aqui sim, jeito de app ---------- */
+@media (max-width:700px){
+  .topo{padding:6px 12px}
+  .wrap{padding:0 12px 48px}
+  .mes{justify-content:space-between;margin:8px 0 12px}
+  .mes h1{font-size:19px;min-width:0}
+  .painel{padding:14px}
+  .duas{gap:12px;margin-top:12px}
+  .coluna{gap:12px}
+  .linha-k{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .linha-k .k.destaque{grid-column:1 / -1}
+  /* Situação do mês no celular: Recebi | Gastei, Vou receber | Vai sair, e embaixo Saldo | Fecha em */
+  .seis .nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px}
+  .seis .linha-k{display:contents}
+  .seis .linha-k .k.destaque{grid-column:auto;order:3;border-top:1px solid var(--line);padding-top:12px}
+  .seis .k b,.seis .k.destaque b{font-size:clamp(17px,5.6vw,22px)}
+  /* valor negativo de cinco dígitos (−R$ X) invadia a caixa do lado no iPhone (06/10/2026) */
+  .seis .k b,.seis .k.destaque b{font-size:clamp(15px,4.6vw,22px)}
+  .k b{font-size:21px} .k.destaque b{font-size:28px}
+  .rosca{grid-template-columns:minmax(0,1fr);justify-items:center}
+  .leg{width:100%}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .stat b{font-size:17px}
+  table.t thead{display:none}
+  .ordem-cel{display:flex}
+  /* os dois filtros da lista alinhados: rótulo de largura igual e o campo ocupa o resto */
+  .filtro-cat,.ordem-cel{display:grid;grid-template-columns:5.6em minmax(0,1fr);gap:8px}
+  .filtro-cat select,.ordem-cel select{width:100%;flex:none}
+  table.t tr{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;gap:0 8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+  td.c-x .x{padding:0;min-width:34px;min-height:40px}   /* o × cabe num toque de dedo */
+  /* no celular a linha toda abre o lançamento; o × some (apagar fica dentro do lançamento) e a descrição quebra a linha */
+  table.t tr.clic,table.t tr.so-ver{grid-template-columns:42px minmax(0,1fr) auto}
+  tr.clic td.c-x,tr.so-ver td.c-x{display:none}
+  tr.clic td.c-desc b{white-space:normal;overflow:visible;text-overflow:clip}
+  tr.clic .so-cel{white-space:normal}
+  tr.clic:active{background:var(--surface-2)}
+  table.t tr:last-child{border-bottom:0}
+  table.t tr.mes-cab{display:block;padding:14px 0 6px} table.t tr.mes-cab th{display:block;padding:0;border:0}
+  table.t td{border:0;padding:0 !important}
+  table.t tbody tr:hover td{background:transparent}
+  td.c-cat,td.c-forma,td.c-quem{display:none}
+  td.c-data{font-size:12.5px}
+  .so-cel{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  td.c-desc{min-width:0} td.c-desc b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  table.fixos td.c-desc b{white-space:normal;overflow:visible;text-overflow:clip}
+  table.fixos tr{grid-template-columns:minmax(0,1fr) 46px 100px 34px;gap:0 6px}   /* 108px: cabe "1.500,00" em 16px */
+  table.fixos input{width:100%}
+  form.linha{grid-template-columns:repeat(2,minmax(0,1fr))}
+  form.linha > div[style]{grid-column:1 / -1 !important}
+  form.linha .b{width:100%}
+  .b:not(.redondo):not(.s){min-height:40px} .b.s{min-height:40px} .redondo{width:40px;height:40px}
+  .pd-acoes .x{min-width:34px;min-height:40px;padding:0 8px}
+  .lanc-chips span{min-height:40px}
+  table.fixos input{min-height:40px}
+  summary{padding-block:8px}
+  [data-limite-x]{min-height:40px;padding:6px 10px}
+  .pe a{display:inline-block;padding:10px 8px}
+  input,select{font-size:16px}   /* abaixo de 16px o iPhone dá zoom ao tocar no campo */
+  .pd{grid-template-columns:minmax(0,1fr) auto} .pd .pd-acoes{grid-column:1 / -1}
+  .pd .pd-quem b{white-space:normal} .pd .pd-val{white-space:normal;max-width:190px}
+  .subabas{margin:8px 0 2px} .subabas button{padding:10px 6px;font-size:13px;flex:1 1 auto}
+  .subabas button{padding:10px 4px;font-size:12.5px;letter-spacing:-.01em}   /* cinco telas no Dinheiro: cabem todas sem rolar */
+  .subabas .so-larg{display:none} .subabas .so-cel{display:inline;font-size:inherit;color:inherit;overflow:visible}
+  .subabas button em{margin-left:4px;padding:1px 6px}
+  .stats.tres{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px} .stats.tres .stat:last-child{grid-column:1 / -1}
+  .bloco{margin-top:12px}
+  .hm{grid-template-columns:minmax(0,1fr) auto} .hm .hm-d{grid-column:1 / -1;grid-row:2}
+}
+/* celular: o botão de lançar fica sempre à mão, no canto de baixo */
+.fab{display:none}
+@media (max-width:700px){
+  .fab{display:grid;place-items:center;position:fixed;right:14px;bottom:14px;z-index:20;width:54px;height:54px;border-radius:50%;border:0;
+    background:var(--accent);color:var(--surface);font-size:30px;line-height:1;font-weight:400;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.28)}
+  .wrap{padding-bottom:84px}
+  .wrap:has(.lanc-form) .fab,.fab.fora{display:none}   /* com o formulário aberto, ou com o botão de cima à vista, ele só atrapalharia */
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important} }
+/* importar o extrato (19/10/2026) */
+.imp-barra{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:4px 0 14px}
+.imp-ok{background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.imp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:4px 0 16px;background:var(--surface-2)}
+.imp h3{margin:0 0 4px;font-size:15px}
+.imp details{margin:10px 0}
+.imp summary{cursor:pointer;font-weight:600;font-size:13.5px;min-height:32px;display:flex;align-items:center}
+.imp-t input[type=text],.imp-t select{width:100%;min-width:0;font:inherit;font-size:14px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text)}
+.imp-t input[type=checkbox]{width:20px;height:20px}
+.imp-t small.nota{display:block;margin-top:2px}
+.imp-t tr.imp-off td{opacity:.6}
+.imp-t tr.imp-falta select[data-imp-cat]{border-color:#d0453a;box-shadow:0 0 0 1px #d0453a}
+.imp-lista{margin:6px 0 0;padding-left:18px;font-size:13.5px}
+.imp .erro{color:#d0453a;font-weight:600;font-size:13.5px}
+@media (max-width:700px){
+  table.imp-t thead{display:none}
+  table.imp-t tr{grid-template-columns:30px minmax(0,1fr) minmax(0,1fr) !important;gap:6px 8px !important}
+  table.imp-t td:nth-child(1){grid-row:1 / span 3}
+  table.imp-t td:nth-child(2){grid-column:2;grid-row:1;font-size:12.5px}
+  table.imp-t td:nth-child(6){grid-column:3;grid-row:1;text-align:right;font-weight:600}
+  table.imp-t td:nth-child(3){grid-column:2 / 4;grid-row:2}
+  table.imp-t td:nth-child(4){grid-column:2;grid-row:3}
+  table.imp-t td:nth-child(5){grid-column:3;grid-row:3}
+  .imp-t input[type=text],.imp-t select{font-size:16px;min-height:40px}
+}
+</style>
+<script>/* o login do Google é feito pela casca: dentro dela esta página não baixa a biblioteca (ganha tempo no celular) */if (window.top === window.self) { var g = document.createElement("script"); g.src = "https://accounts.google.com/gsi/client"; g.async = true; document.head.appendChild(g); }</script>
+<script src="exportar-xlsx.js?v=20261024-original-2"></script>
+<script src="ler-xlsx.js?v=20261024-original-2"></script>
+<script src="financas-core.js?v=20261024-original-2"></script>
+<script src="financas-original-core.js?v=20261024-original-2"></script>
+<script src="categorias.js?v=20261024-original-2"></script>
+<script src="extrato.js?v=20261024-original-2"></script>
+<script src="lancamento.js?v=20261024-original-2"></script>
+<script src="rotulos.js?v=20261024-original-2"></script>
+<script src="periodo-fixo.js?v=20261024-original-2"></script>
+<script src="grafico-meses.js?v=20261024-original-2"></script>
+<script src="nuvem.js?v=20261024-original-2"></script>
+<script>/* dentro da casca do Controle Único: a casca já mostra marca, abas e tema */ if (window.top !== window.self) document.documentElement.classList.add("na-casca");</script>
+<link rel="stylesheet" href="financas-original.css?v=20261024-original-2">
+</head>
+<body>
+
+<header>
+  <div class="topo">
+    <div class="marca"><b>Controle Único</b></div>
+    <p class="nuvem"><span class="nuvem-ponto" id="nuvem-ponto"></span><span id="nuvem-texto">Carregando…</span>
+      <button class="b s" id="nuvem-entrar">Entrar com o Google</button><span id="nuvem-acoes"></span></p>
+    <button class="b s" id="tema" title="Tema claro ou escuro">◐</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="abas" id="abas"></nav>
+  <main id="tela"></main>
+  <button type="button" class="fab" id="fab" aria-label="Novo lançamento">+</button>
+  <div class="pe">
+    <button class="b s" id="exportar">Baixar planilha</button>
+    <button class="b s" id="exportarJson">Exportar dados</button>
+    <button class="b s" id="importarJson">Importar dados</button>
+    <input type="file" id="arquivoJson" accept="application/json" class="hidden">
+  </div>
+</div>
+
+<script>
+// ===================================================================
+// Dinheiro e Casa. Dois cadernos, cada um num arquivo do Google Drive:
+// "Controle Único - dinheiro.json" (só dele) e "Controle Único - casa.json"
+// (dele e da pessoa com quem divide a casa). A aba Tudo junta os dois com a Clínica e a Carteira,
+// que moram em páginas próprias dentro da mesma casca (index.html).
+// As contas seguem os sistemas do Vault: Ciclo do Dinheiro do Mês e Ciclo da Sessão.
+// Este arquivo é público: nenhum dado pessoal fica escrito aqui.
+// ===================================================================
+
+// Fora da casca, esta página não tem a Clínica ao lado para a aba Tudo: abre pela casca.
+if (window.top === window.self) location.replace("index.html" + (location.hash || "#tudo"));
+
+// As listas e a troca dos nomes antigos (com ponto final, como nas planilhas) moram em categorias.js.
+// Categorias que ele mesmo cria (19/10/2026): ficam no caderno de cada lado (Pessoal no Dinheiro, Casa na Casa),
+// numa lista com id, para os dois aparelhos juntarem sem perder nenhuma. Tirar só esconde do formulário:
+// o que já foi lançado nela continua com o nome. As de fábrica não se mexem.
+const GRUPO_MINHAS = "Minhas";
+const extrasDe = cad => ((livro[cad] && livro[cad].categoriasExtras) || []).filter(x => x && x.nome && !x.oculta);
+function gruposCom(base, extras){
+  const g = base.map(([n, cs]) => [n, cs.slice()]);
+  extras.forEach(x => {
+    if (g.some(([, cs]) => cs.includes(x.nome))) return;
+    let alvo = g.find(([n]) => n === x.grupo);
+    if (!alvo) { alvo = g.find(([n]) => n === GRUPO_MINHAS) || (g.push([GRUPO_MINHAS, []]), g[g.length - 1]); }
+    alvo[1].push(x.nome);
+  });
+  return g;
+}
+const gruposDinheiro = () => gruposCom([["Suas categorias", [...new Set(livro.dono.lancamentos.map(l => l.categoria).filter(Boolean))]]], extrasDe("dono"));
+const gruposCasa = () => gruposCom(Categorias.GRUPOS_CASA, extrasDe("casa"));
+const catsDinheiro = () => [...new Set(livro.dono.lancamentos.map(l => l.categoria).filter(Boolean).concat(Categorias.DINHEIRO))].concat(extrasDe("dono").map(x => x.nome).filter(n => !Categorias.DINHEIRO.includes(n)));
+const catsCasa = () => Categorias.CASA.concat(extrasDe("casa").map(x => x.nome).filter(n => !Categorias.CASA.includes(n)));
+// nomes que a leitura dos cadernos troca sozinha (categorias.js): não podem virar categoria nova
+const NOMES_ANTIGOS_ORIGINAL = ["entretenimento","pratica clinica","assinaturas","contabilidade","gastos mae","alimentacao","ifood","fumo","compras","comunicacao","transporte","restaurante","servicos domesticos","moradia","reserva","outras entradas"];
+const NOMES_ANTIGOS = [];
+const TIPOS      = Categorias.TIPOS;
+const FORMAS     = Categorias.FORMAS;
+// todo caderno que chega (do aparelho, do Drive ou de um arquivo) passa pela troca de nomes
+const arrumar = { dono: FinancasOriginal.paraOriginal, casa: Categorias.cadernoCasa };
+
+const VAZIO = {
+  dono: () => FinancasOriginal.paraOriginal(FinancasOriginal.vazio()),
+  casa:    () => ({ versao:1, caderno:"casa", atualizadoEm:null, lancamentos:[], pessoas:["Pessoa 1","Pessoa 2"], divisao:0.5 })
+};
+const NOME_DRIVE = { dono:"Controle Único - finanças.json", casa:"Controle Único - casa.json" };
+const ID_NUVEM   = { dono:"financas", casa:"casa" };
+
+// ---------- armazenamento: cache no navegador + caderno no Google Drive ----------
+const chaveCache = c => "controle-unico-" + ID_NUVEM[c] + "-cache";
+const armazem = {
+  ler(c){ try { const t = localStorage.getItem(chaveCache(c)); return t ? JSON.parse(t) : null; } catch(e){ return null; } },
+  gravar(c, d){ d.atualizadoEm = new Date().toISOString();
+    try { localStorage.setItem(chaveCache(c), JSON.stringify(c === "dono" ? FinancasOriginal.paraCaderno(d) : d)); } catch(e){}
+    if (nuvem[c]) nuvem[c].mudou(); }
+};
+
+const livro = {};
+for (const c of Object.keys(VAZIO)) livro[c] = arrumar[c](Object.assign(VAZIO[c](), armazem.ler(c) || {}));
+function salvar(c){ armazem.gravar(c, livro[c]); desenhar(); }
+
+// Dentro do controle da Pessoa 2 (ana.html), esta página só serve a Casa: o caderno do dinheiro dele
+// não é aberto nem criado no Google dela (30/09/2026).
+const PERFIL = (() => { try { return window.top.PERFIL || ""; } catch(e){ return ""; } })();
+const nuvem = {};
+for (const c of (PERFIL === "ana" ? ["casa"] : Object.keys(VAZIO))) {
+  nuvem[c] = Nuvem.caderno({
+    id: ID_NUVEM[c], nome: NOME_DRIVE[c], rotulo: c === "casa" ? "o caderno da Casa" : "seu caderno de finanças",
+    caderno: VAZIO[c]().caderno,   // o campo "caderno" que o arquivo certo tem; outro valor é de outro caderno
+    compartilhado: c === "casa",
+    arquivoObrigatorio: c === "dono", criarVazio:false, copiaSemanal:false,
+    obter: () => c === "dono" ? FinancasOriginal.paraCaderno(livro[c]) : livro[c],
+    aplicar: d => { livro[c] = arrumar[c](Object.assign(VAZIO[c](), d)); try { localStorage.setItem(chaveCache(c), JSON.stringify(c === "dono" ? FinancasOriginal.paraCaderno(livro[c]) : livro[c])); } catch(e){} desenhar(); },
+    temDados: d => !!(d && ((d.lancamentos && d.lancamentos.length) || (d.gastosFixos && d.gastosFixos.length)))
+  });
+}
+
+// ---------- utilidades ----------
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+let aba = "tudo";
+let ref = new Date(); ref.setDate(1);
+const novoId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+const dinheiro = v => (Number(v) || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+const chaveMes = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+const noMes = l => (l.data || "").slice(0, 7) === chaveMes(ref);
+const hojeISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const soma = (a, f) => a.reduce((s, x) => s + (Number(f ? f(x) : x) || 0), 0);
+const escH = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const dia = d => (d || "").slice(8,10) + "/" + (d || "").slice(5,7);
+const primeiro = n => String(n || "").split(" ")[0];
+// Gasto fixo guarda o valor de cada mês ("2026-07": 509), como a aba Gastos Fixos da planilha:
+// há conta de todo mês e conta de um mês só (anuidade, assinatura anual).
+const valorFixo = (g, chave) => g.valores ? (Number(g.valores[chave]) || 0) : (Number(g.valor) || 0);
+// Fixo com dia 29, 30 ou 31 num mês mais curto cobra no último dia do mês (antes, no dia 30 de um
+// mês de 30 dias, o fixo do dia 31 ficava em "Ainda vai sair" até o mês acabar). 0 = sem dia marcado.
+const ultimoDia = km => new Date(Number(km.slice(0, 4)), Number(km.slice(5, 7)), 0).getDate();
+const diaFixo = (g, km) => Number(g.dia) > 0 ? Math.min(Number(g.dia), ultimoDia(km)) : 0;
+// valor guardado (número) para o campo com a vírgula automática ("509,00")
+const valorCampo = v => Number(v) > 0 ? FormLancamento.mascara(Number(v).toFixed(2)) : "";
+const lerLocal = k => { try { const t = localStorage.getItem(k); return t ? JSON.parse(t) : null; } catch(e){ return null; } };
+
+// ---------- o que vem das outras páginas ----------
+// A Clínica mora em clinica.html, carregada ao lado desta pela casca. A aba Tudo pergunta
+// os números do mês à própria Clínica, para as duas telas nunca discordarem.
+function janelaClinica(){
+  try {
+    const f = window.parent.document.getElementById("q-clinica");
+    const w = f && f.contentWindow;
+    if (w && typeof w.numerosDoMes === "function" && w.dados && w.dados.pacientes) return w;
+  } catch(e){}
+  return null;
+}
+function contasClinica(){
+  const w = janelaClinica();
+  // Regra de Dono (27/09/2026): o que entrou no mês é tudo; o que falta receber compara
+  // só pacientes com pacientes. Empréstimos e acertos vêm da planilha com origem Pendência. ou Extra.
+  // no caderno da Clínica a origem do dinheiro fica em "receita" ("origem" diz de onde veio o registro)
+  const dePaciente = g => !g.receita || g.receita === "Prática Clínica.";
+  if (w) {
+    const mes = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    const n = w.numerosDoMes(mes), doMes = w.pagamentosDoMes(mes);
+    const pacientes = soma(doMes.filter(dePaciente), g => g.valor);
+    return { ok:true, ativos:w.dados.pacientes.filter(p => !(w.encerradoHoje && w.encerradoHoje(p))).length, previsto:n.previsto, previstoTriagem:n.previstoTriagem || 0, recebido:n.recebido, pacientes,
+             falta:Math.max(n.previsto - pacientes, 0), sessoes:n.sessoes, aConfirmar:n.aConfirmar || 0 };
+  }
+  // Sem a Clínica aberta: o recebido sai do caderno guardado neste aparelho; o previsto não.
+  const c = lerLocal("controle-unico-clinica-cache");
+  const doMes = c ? (c.pagamentos || []).filter(noMes) : [];
+  return { ok:false, ativos:null, previsto:null, recebido:soma(doMes, g => g.valor),
+           pacientes:soma(doMes.filter(dePaciente), g => g.valor), falta:null, sessoes:null };
+}
+// A Carteira grava o total de cada visita (cripto-v1-visita) neste mesmo navegador.
+function carteiraAgora(){
+  const v = lerLocal("cripto-v1-visita");
+  return v && typeof v.total === "number" ? { total:v.total, t:v.t } : null;
+}
+
+// ---------- contas ----------
+// Regra do sistema Ciclo do Dinheiro do Mês: a casa entra no financeiro
+// dele só pelo que ELE pagou, no lugar da categoria Moradia.
+// A divisão da casa (0 a 1). 0 é um valor válido; só um valor ausente ou estranho volta para metade.
+function parteCasa(){
+  const n = Number(livro.casa.divisao);
+  return Number.isFinite(n) && n >= 0 && n <= 1 ? n : 0.5;
+}
+function contasCasa(km = chaveMes(ref)){
+  const doMes = livro.casa.lancamentos.filter(l => (l.data || "").slice(0, 7) === km);
+  const total = soma(doMes, l => l.valor);
+  const parte = parteCasa();
+  const metade = total * parte;
+  const pagou = {}, dif = {};
+  livro.casa.pessoas.forEach((p, i) => {
+    pagou[p] = soma(doMes.filter(l => l.quem === p), l => l.valor);
+    // a primeira pessoa responde por "parte" do total e a segunda pelo resto
+    dif[p] = pagou[p] - total * (i === 0 ? parte : 1 - parte);
+  });
+  return { total, metade, pagou, dif };
+}
+
+// Dono, 25/09/2026: a metade serve para mostrar quem pagou mais e quem pagou menos,
+// não para acertar contas. Quem ficou atrás costuma pagar mais nas compras seguintes.
+function balanca(c, p1, p2){
+  if (c.dif[p1] < -0.005) return `${primeiro(p1)} está ${dinheiro(-c.dif[p1])} atrás`;
+  if (c.dif[p2] < -0.005) return `${primeiro(p2)} está ${dinheiro(-c.dif[p2])} atrás`;
+  return "empatado";
+}
+
+// Os fixos do mês que ainda não saíram: no mês corrente, os de dia depois de hoje; num mês futuro, todos;
+// num mês que já passou, nenhum (null). A Situação do mês e o Mês a mês usam a mesma conta.
+function fixosQueFaltam(km){
+  const agora = new Date(), kHoje = chaveMes(agora);
+  const fixosDoMes = livro.dono.gastosFixos.filter(g => valorFixo(g, km) > 0);
+  return km === kHoje ? soma(fixosDoMes.filter(g => diaFixo(g, km) > agora.getDate()), g => valorFixo(g, km))
+    : km > kHoje ? soma(fixosDoMes, g => valorFixo(g, km)) : null;
+}
+function contasDinheiro(){
+  const doMes = livro.dono.lancamentos.filter(noMes);
+  const cl = contasClinica();
+  const casa = contasCasa();
+  const minhaCasa = casa.pagou[livro.casa.pessoas[0]] || 0;
+
+  const receitaSolta = soma(doMes.filter(l => l.tipo === "Receita"), l => l.valor);
+  const entrou = receitaSolta + cl.recebido;
+  // Moradia fica de fora para não contar duas vezes: ela vem da casa.
+  // Os gastos fixos do mês contam como despesa do mês, como na planilha.
+  const km = chaveMes(ref), agora = new Date(), kHoje = chaveMes(agora);
+  const fixosDoMes = livro.dono.gastosFixos.filter(g => valorFixo(g, km) > 0);
+  // Mês futuro: nenhum fixo saiu ainda, todos ficam em "Ainda vai sair" (antes entravam em "Gastei"
+  // como se já tivessem sido pagos, e a tela Gastos fixos dizia o contrário).
+  const faltaSair = fixosQueFaltam(km);
+  const semDia = fixosDoMes.filter(g => !Number(g.dia)).length;
+  // No mês corrente, o fixo cujo dia ainda não chegou fica só em "Ainda vai sair": antes ele entrava
+  // também em "Gastei" e era descontado duas vezes no fim do mês (corrigido em 01/10/2026).
+  // Fixo sem dia marcado conta como já pago.
+  const fixosMes = soma(fixosDoMes, g => valorFixo(g, km)) - (faltaSair || 0);
+  const saiu = soma(doMes.filter(l => l.tipo === "Despesa" && (!l._financeiro || l.situacao === "Pago")), l => l.valor) + fixosMes + minhaCasa;
+
+  // Aporte e resgate mexem sempre na reserva, seja qual for a categoria (01/10/2026).
+  const r = livro.dono.reserva;
+  const desde = r.dataBase || "0000-00-00";
+  const movReserva = livro.dono.lancamentos.filter(l => (l.data || "") >= desde);
+  const reserva = (Number(r.saldoBase) || 0)
+    + soma(movReserva.filter(l => l.tipo === "Aporte"), l => l.valor)
+    - soma(movReserva.filter(l => l.tipo === "Resgate"), l => l.valor);
+
+  // Como na linha Total do painel da planilha: o que foi para a reserva saiu do caixa do mês,
+  // o que voltou dela entrou. Assim, tirar da reserva e gastar deixa o saldo do mês no lugar.
+  const aportesMes = soma(doMes.filter(l => l.tipo === "Aporte"), l => l.valor);
+  const resgatesMes = soma(doMes.filter(l => l.tipo === "Resgate"), l => l.valor);
+  // arredondado ao centavo: a soma de decimais no computador deixava −0,00000000000006 e o mês "fechava negativo em R$ 0,00"
+  const sobra = Math.round((entrou - saiu - aportesMes + resgatesMes) * 100) / 100;
+  // mês que já acabou fecha no que fechou; o que os pacientes ficaram devendo aparece à parte (06/10/2026)
+  const fimDoMes = km < kHoje ? sobra : Math.round((sobra + (cl.falta || 0) - (faltaSair || 0)) * 100) / 100;
+  return { entrou, receitaSolta, recebidoClinica: cl.recebido, dePacientes: cl.pacientes, saiu, minhaCasa, fixosMes, faltaSair, semDia, reserva,
+           aportesMes, resgatesMes, sobra, falta: cl.falta, clinicaOk: cl.ok, fimDoMes, passado: km < kHoje };
+}
+
+// Entrou e saiu em cada mês, para o gráfico do Dinheiro (01/10/2026). As mesmas regras do mês
+// aberto: entrou é receita solta mais tudo o que a Clínica recebeu; saiu é despesa lançada sem
+// Moradia, mais os fixos do mês, mais o que ele pagou na casa.
+function pagamentosClinica(){
+  const w = janelaClinica(), cache = w ? null : lerLocal("controle-unico-clinica-cache");
+  return w ? w.dados.pagamentos || [] : (cache && cache.pagamentos) || [];
+}
+const doK = k => l => (l.data || "").slice(0, 7) === k;
+function serieMeses(){
+  const pags = pagamentosClinica();
+  return GraficoMeses.meses(12, chaveMes(ref)).map(k => mesDinheiro(k, pags));
+}
+// Um mês do Dinheiro pela chave ("2026-09"), com as regras de serieMeses. Serve também ao Fechamento.
+function mesDinheiro(k, pags = pagamentosClinica()){
+  const eu = livro.casa.pessoas[0];
+  const lk = livro.dono.lancamentos.filter(doK(k));
+  const m = { k,
+    entrou: soma(lk.filter(l => l.tipo === "Receita"), l => l.valor) + soma(pags.filter(doK(k)), g => g.valor),
+    saiu: soma(lk.filter(l => l.tipo === "Despesa" && (!l._financeiro || l.situacao === "Pago")), l => l.valor)
+        // no mês corrente, só os fixos que já saíram, como no "Gastei" da Situação do mês (06/10/2026: antes a
+        // lista descontava também os que ainda vão vencer e o mês dizia "sobrou" menos que o "Saldo agora")
+        + soma(livro.dono.gastosFixos, g => valorFixo(g, k)) - (fixosQueFaltam(k) || 0)
+        + soma(livro.casa.lancamentos.filter(doK(k)).filter(l => l.quem === eu), l => l.valor),
+    aportes: soma(lk.filter(l => l.tipo === "Aporte"), l => l.valor),
+    resgates: soma(lk.filter(l => l.tipo === "Resgate"), l => l.valor),
+    pacientes: soma(pags.filter(doK(k)).filter(g => !g.receita || g.receita === "Prática Clínica."), g => g.valor) };
+  // o que sobrou é a mesma conta do "Saldo" da Situação do mês: o que foi para a reserva saiu do
+  // caixa, o que voltou dela entrou (04/10/2026: antes a lista dizia "faltou" num mês que a
+  // Situação dizia ter fechado positivo, como setembro, pago com o resgate de 30/09)
+  m.sobra = Math.round((m.entrou - m.saiu - m.aportes + m.resgates) * 100) / 100;
+  return m;
+}
+
+// ---------- ordenar as listas ----------
+// Clicar no cabeçalho (ou escolher na caixa, no celular) ordena por aquela coluna; clicar de
+// novo inverte. Data e valor começam do maior; texto, de A a Z (pedido dele, 01/10/2026).
+const ordem = { lanc:{ c:"data", d:-1 }, casa:{ c:"data", d:-1 } };
+const COLUNAS = {
+  lanc: [["data","Dia"],["descricao","Descrição"],["categoria","Categoria"],["forma","Forma"],["valor","Valor"]],
+  casa: [["data","Dia"],["compra","Compra"],["quem","Quem"],["valor","Valor"]]
+};
+const valorDaColuna = (l, c) => c === "valor" ? Number(l.valor) || 0
+  : c === "compra" ? semPonto(l.categoria) + " " + (l.descricao || "") : String(l[c] || "");
+// No mesmo dia, o lançado por último aparece primeiro (pedido dele, 05/10/2026): a lista guarda
+// a ordem em que foi lançado, e é ela que desempata.
+function ordenar(lista, qual){
+  const { c, d } = ordem[qual];
+  return lista.map((l, i) => [l, i]).sort(([a, ia], [b, ib]) => {
+    const x = valorDaColuna(a, c), y = valorDaColuna(b, c);
+    const r = typeof x === "number" ? x - y : x.localeCompare(y, "pt-BR", { sensitivity:"base" });
+    return (r || (b.data || "").localeCompare(a.data || "") * d) * d || (c === "data" ? (ia - ib) * d : ib - ia);
+  }).map(([l]) => l);
+}
+function cabecalho(qual){
+  const o = ordem[qual];
+  return `<thead><tr>${COLUNAS[qual].map(([c, n]) => `<th${c === "valor" ? ' class="dir"' : ""}><button type="button" class="ord" data-ord="${qual}:${c}" aria-pressed="${o.c === c}"
+    title="Ordenar por ${n.toLowerCase()}">${n}${o.c === c ? (o.d > 0 ? " ▲" : " ▼") : ""}</button></th>`).join("")}<th><span class="so-leitor">Ações</span></th></tr></thead>`;
+}
+// Filtro por categoria nas listas de lançamentos (pedido dele, 02/10/2026): só as categorias que
+// aparecem no mês; a escolha que não existe no mês aberto volta para "todas".
+const filtroCat = { lanc:"", casa:"" };
+function filtrar(lista, qual){
+  if (filtroCat[qual] && !lista.some(l => l.categoria === filtroCat[qual])) filtroCat[qual] = "";
+  return filtroCat[qual] ? lista.filter(l => l.categoria === filtroCat[qual]) : lista;
+}
+function filtroCategoria(todos, qual){
+  const cats = [...new Set(todos.map(l => l.categoria).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  if (cats.length < 2) return "";
+  const vistos = filtrar(todos, qual);
+  return `<label class="filtro-cat">Categoria <select data-filtrocat="${qual}" aria-label="Filtrar por categoria">
+    <option value="">todas</option>${cats.map(c => `<option value="${escH(c)}"${filtroCat[qual] === c ? " selected" : ""}>${escH(comPonto(nomeCat(c)))}</option>`).join("")}</select>
+    ${filtroCat[qual] ? `<span>${vistos.length} de ${todos.length} · ${dinheiro(soma(vistos, l => l.valor))}</span>` : ""}</label>`;
+}
+function ordemCelular(qual){
+  const o = ordem[qual], op = (c, d, n) => `<option value="${c}:${d}"${o.c === c && o.d === d ? " selected" : ""}>${n}</option>`;
+  return `<label class="ordem-cel">Ordenar por <select data-ordsel="${qual}" aria-label="Ordenar a lista">
+    ${op("data", -1, "mais recentes")}${op("data", 1, "mais antigos")}${op("valor", -1, "maior valor")}${op("valor", 1, "menor valor")}
+    ${COLUNAS[qual].filter(([c]) => c !== "data" && c !== "valor").map(([c, n]) => op(c, 1, n.toLowerCase() + ", de A a Z")).join("")}</select></label>`;
+}
+
+// ---------- o formulário único de lançamento ----------
+// Um botão só, e dentro dele a escolha: é Pessoal (caderno do Dinheiro) ou é da Casa (pedido
+// dele, 01/10/2026). Dentro do controle da Pessoa 2 esta página só tem a Casa, então não há escolha.
+// O desenho e o comportamento moram em lancamento.js (o mesmo do controle da Pessoa 2). Aqui fica só
+// o lugar onde ele entra e o que acontece com o lançamento pronto.
+// Dentro do controle da Pessoa 2 ela altera e apaga só as compras dela na Casa; as dele ela só vê
+// (Dono, 04/10/2026). No app dele nada muda.
+const euNaCasaAna = () => livro.casa.pessoas.find(x => /^ana/i.test(x)) || livro.casa.pessoas[1];
+const podeMexer = l => PERFIL !== "ana" || (l && l.quem === euNaCasaAna());
+function formLancamento(padrao){ return `<div class="lanc" data-lanc="${padrao || ""}"></div>`; }
+function configLancamento(padrao){
+  const soCasa = PERFIL === "ana";
+  const [p1, p2] = livro.casa.pessoas;
+  return {
+    tela: aba, padrao: soCasa ? "casa" : (padrao || null),
+    dataPadrao: chaveMes(ref) === chaveMes(new Date()) ? hojeISO() : chaveMes(ref) + "-01",
+    pessoal: soCasa ? null : {
+      explica: "Só meu. Entra inteiro no meu mês.",
+      tipos: [["Despesa","Despesa",""], ["Receita","Receita","Entrada que não é de paciente (pagamento de paciente é lançado na Clínica)."],
+              ["Aporte","Aporte na reserva","Dinheiro que foi para a reserva de emergência."], ["Resgate","Resgate da reserva","Dinheiro que saiu da reserva de emergência. O gasto feito com ele é lançado à parte, como despesa."]],
+      grupos: gruposDinheiro(), formas: FORMAS },
+    casa: {
+      explica: `Da casa, dividido com ${primeiro(soCasa ? p1 : p2)}. Entra na balança.`,
+      pessoas: livro.casa.pessoas.slice(), eu: soCasa ? euNaCasaAna() : p1,
+      grupos: gruposCasa() },
+    lancar(onde, d){
+      const id = novoId();
+      if (onde === "casa") {
+        livro.casa.lancamentos.push({ id, data:d.data, quem:d.quem, descricao:d.descricao || "-", categoria:d.categoria, valor:d.valor });
+        salvar("casa");
+        return () => { livro.casa.lancamentos = livro.casa.lancamentos.filter(x => x.id !== id); salvar("casa"); };
+      }
+      const reserva = d.tipo === "Aporte" || d.tipo === "Resgate";
+      livro.dono.lancamentos.push({ id, data:d.data, tipo:d.tipo, descricao:d.descricao,
+        categoria: reserva ? "Reserva" : d.tipo === "Receita" ? "Outras entradas" : d.categoria, forma:d.forma, valor:d.valor });
+      salvar("dono");
+      return () => { livro.dono.lancamentos = livro.dono.lancamentos.filter(x => x.id !== id); salvar("dono"); };
+    },
+    alterar(onde, id, d){
+      const cad = onde === "casa" ? "casa" : "dono";
+      const l = livro[cad].lancamentos.find(x => x.id === id);
+      if (!l || (cad === "casa" && !podeMexer(l))) return null;
+      const antes = JSON.parse(JSON.stringify(l));
+      if (onde === "casa") Object.assign(l, { data:d.data, quem:d.quem, descricao:d.descricao || "-", categoria:d.categoria, valor:d.valor });
+      else {
+        const reserva = d.tipo === "Aporte" || d.tipo === "Resgate";
+        Object.assign(l, { data:d.data, tipo:d.tipo, descricao:d.descricao,
+          categoria: reserva ? "Reserva" : d.tipo === "Receita" ? "Outras entradas" : d.categoria, forma:d.forma, valor:d.valor });
+      }
+      salvar(cad);
+      // desfazer devolve o lançamento como estava, no mesmo lugar da lista
+      return () => { const i = livro[cad].lancamentos.findIndex(x => x.id === id); if (i >= 0) livro[cad].lancamentos[i] = antes; salvar(cad); };
+    },
+    apagar(onde, id){
+      const cad = onde === "casa" ? "casa" : "dono";
+      const i = livro[cad].lancamentos.findIndex(x => x.id === id); if (i < 0 || (cad === "casa" && !podeMexer(livro[cad].lancamentos[i]))) return null;
+      const [tirado] = livro[cad].lancamentos.splice(i, 1);
+      salvar(cad);
+      return () => { if (!livro[cad].lancamentos.some(x => x.id === id)) livro[cad].lancamentos.splice(Math.min(i, livro[cad].lancamentos.length), 0, tirado); salvar(cad); };
+    }
+  };
+}
+// o lápis de cada linha abre o formulário com aquele lançamento, para alterar
+function alterarLancamento(cad, id){
+  const l = livro[cad].lancamentos.find(x => x.id === id); if (!l || (cad === "casa" && !podeMexer(l))) return;
+  if(cad === "dono" && l._financeiro && window.abrirGastoFinanceiro){ abrirGastoFinanceiro(id); return; }
+  const el = document.querySelector("[data-lanc]"); if (!el) return;
+  FormLancamento.editar(configLancamento(el.dataset.lanc || null), cad === "casa" ? "casa" : "pessoal", l);
+  desenhar();
+  const novo = document.querySelector("[data-lanc]"); if (novo) novo.scrollIntoView({ block:"start", behavior:"smooth" });
+}
+
+// ---------- separar o pessoal da casa (06/10/2026) ----------
+// Em 05/10 o caderno do Dinheiro de um aparelho ficou ligado ao arquivo da Casa no Drive e gravou lá
+// o caderno pessoal inteiro (lançamentos, fixos, reserva, pendências). Por isso os lançamentos pessoais
+// apareciam na Casa, entravam no total e na média dela, e a Pessoa 2 via. A trava em nuvem.js impede que
+// volte a acontecer; aqui ele separa o que já se misturou, com um toque, depois de uma cópia dos dois
+// cadernos no Drive. Nenhum lançamento é apagado nem muda de valor: cada um volta ao seu caderno.
+// Pessoal na Casa: tem tipo (Despesa, Receita, Aporte, Resgate) e não tem quem pagou.
+// Da casa no Dinheiro: tem quem pagou (lançamento pessoal nunca tem).
+const SO_DINHEIRO = ["gastosFixos", "reserva", "pendencias", "limites"];
+const pessoalNaCasa = l => !!l && !l.quem && !!l.tipo;
+const daCasaNoDinheiro = l => !!l && !!l.quem;
+function misturaNosCadernos(casa = livro.casa, din = livro.dono){
+  const saem = casa.lancamentos.filter(pessoalNaCasa), voltam = din.lancamentos.filter(daCasaNoDinheiro);
+  const chaves = SO_DINHEIRO.filter(k => k in casa);
+  // a sobra da trava só pede separação se tiver lançamento pessoal que nenhum dos dois cadernos tem
+  const ids = new Set(din.lancamentos.concat(casa.lancamentos).map(l => l.id));
+  const soNaSobra = sobraDaTrava().filter(l => l && l.id && !l.quem && l.tipo && !ids.has(l.id));
+  return saem.length || voltam.length || chaves.length || soNaSobra.length ? { saem:saem.concat(soNaSobra), voltam, chaves } : null;
+}
+// Só lê: devolve os dois cadernos já separados. Na mesma linha (mesmo id) vale a versão que estava na
+// Casa, porque desde 05/10 era lá que o Dinheiro deste aparelho gravava (o arquivo do Dinheiro parou).
+// "sobra": o que o aparelho com o arquivo trocado tinha guardado quando a trava agiu (nuvem.js); um
+// lançamento pessoal que só exista lá também volta ao Dinheiro.
+const CH_TRAVA_DIN = "controle-unico-dinheiro-antes-da-trava";
+function sobraDaTrava(){ try { const g = JSON.parse(localStorage.getItem(CH_TRAVA_DIN)); return g && g.dados && Array.isArray(g.dados.lancamentos) ? g.dados.lancamentos : []; } catch(e){ return []; } }
+function separarCadernos(casa, din, sobra = []){
+  const C = JSON.parse(JSON.stringify(casa)), D = JSON.parse(JSON.stringify(din));
+  const saem = C.lancamentos.filter(pessoalNaCasa), voltam = D.lancamentos.filter(daCasaNoDinheiro);
+  const uniao = (meus, deLa) => {
+    const m = new Map(deLa.map(x => [x.id, x])), ja = new Set(meus.map(x => x.id));
+    return meus.map(x => m.has(x.id) ? m.get(x.id) : x).concat(deLa.filter(x => !ja.has(x.id)));
+  };
+  D.lancamentos = uniao(D.lancamentos.filter(l => !daCasaNoDinheiro(l)), saem);
+  const temNoDin = new Set(D.lancamentos.map(l => l.id)), naCasa = new Set(C.lancamentos.map(l => l.id));
+  sobra.filter(l => l && l.id && !l.quem && l.tipo && !temNoDin.has(l.id) && !naCasa.has(l.id)).forEach(l => { D.lancamentos.push(l); temNoDin.add(l.id); });
+  ["gastosFixos", "pendencias"].forEach(k => { if (Array.isArray(C[k])) D[k] = uniao(Array.isArray(D[k]) ? D[k] : [], C[k]); });
+  ["reserva", "limites"].forEach(k => { if (C[k] != null && typeof C[k] === "object") D[k] = C[k]; });
+  SO_DINHEIRO.forEach(k => delete C[k]);
+  const jaNaCasa = new Set(C.lancamentos.filter(l => !pessoalNaCasa(l)).map(l => l.id));
+  C.lancamentos = C.lancamentos.filter(l => !pessoalNaCasa(l))
+    .concat(voltam.filter(l => !jaNaCasa.has(l.id)).map(l => ({ id:l.id, data:l.data, quem:l.quem, descricao:l.descricao, categoria:l.categoria, valor:l.valor })));
+  D.caderno = "dinheiro"; C.caderno = "casa";
+  return { casa:C, din:D, saem, voltam };
+}
+const CH_SEPAROU = "controle-unico-separacao-casa";
+const semData = d => { const c = Object.assign({}, d); delete c.atualizadoEm; return JSON.stringify(c); };
+function separacaoGuardada(){ try { return JSON.parse(localStorage.getItem(CH_SEPAROU)); } catch(e){ return null; } }
+// o botão só aparece no app dele, com os dois cadernos já abertos do arquivo certo no Drive
+const podeSeparar = () => PERFIL !== "ana" && nuvem.dono && nuvem.casa
+  && nuvem.dono.conferido() && nuvem.casa.conferido() && nuvem.dono.arquivoId() !== nuvem.casa.arquivoId();
+function painelSeparar(){
+  if (PERFIL === "ana") return "";
+  const m = misturaNosCadernos();
+  if (!m) {
+    const g = separacaoGuardada();
+    if (!g || g.depois !== semData(livro.casa) + semData(livro.dono)) return "";
+    return `<section class="painel bloco aviso-fx"><p>Pessoal e casa separados em ${escH(g.quando)}: ${g.saem} lançamento${g.saem === 1 ? "" : "s"} voltaram ao Dinheiro.
+      A cópia de antes está no Drive, na pasta Controle Único - cópias.</p><p style="margin:8px 0 0"><button class="b s" type="button" id="desfazerSeparar">Desfazer a separação</button></p></section>`;
+  }
+  const n = m.saem.length, datas = m.saem.map(l => l.data || "").filter(Boolean).sort();
+  const extras = [m.chaves.includes("gastosFixos") && "gastos fixos", m.chaves.includes("reserva") && "reserva", m.chaves.includes("pendencias") && "pendências"].filter(Boolean);
+  const total = soma(m.saem.filter(l => l.tipo === "Despesa"), l => l.valor);
+  const linha = l => `<li>${dataCurta(l.data)}/${(l.data || "").slice(2, 4)} · ${escH(semPonto(l.descricao && l.descricao !== "-" ? l.descricao : nomeCat(l.categoria)))} · ${escH(semPonto(l.tipo))} · ${dinheiro(l.valor)}</li>`;
+  return `<section class="painel bloco aviso-fx" id="painelSeparar"><p><b>O caderno da Casa está com ${n} lançamento${n === 1 ? "" : "s"} pessoa${n === 1 ? "l" : "is"} seu${n === 1 ? "" : "s"}${datas.length ? ` (de ${dataCurta(datas[0])}/${datas[0].slice(2, 4)} a ${dataCurta(datas[datas.length - 1])}/${datas[datas.length - 1].slice(2, 4)})` : ""}${extras.length ? ", mais " + extras.join(", ") : ""}.</b>
+      Eles entram no total e na média da Casa (${dinheiro(total)} em despesas) e a Pessoa 2 vê.${m.voltam.length ? ` E o seu Dinheiro está com ${m.voltam.length} compras da casa, que aparecem nas listas dele.` : ""}
+      Separar devolve cada um ao seu caderno, sem apagar nem mudar valor. Antes, o app guarda uma cópia dos dois cadernos no Drive.</p>
+    <details style="margin-top:8px"><summary>Ver os ${n} que saem da Casa</summary><ul class="nota" style="margin:6px 0 0;padding-left:18px">${m.saem.slice().sort((a, b) => (a.data || "").localeCompare(b.data || "")).map(linha).join("")}</ul></details>
+    <p style="margin:10px 0 0">${podeSeparar() ? `<button class="b p" type="button" id="separarAgora">Separar pessoal e casa</button>` : `<span class="nota">Abrindo os dois cadernos no Drive; o botão aparece quando estiverem abertos.</span>`}</p></section>`;
+}
+async function separarAgora(){
+  if (!podeSeparar()) return;
+  const r = separarCadernos(livro.casa, livro.dono, sobraDaTrava());
+  const antesCasa = soma(livro.casa.lancamentos.filter(noMes), l => l.valor), depoisCasa = soma(r.casa.lancamentos.filter(noMes), l => l.valor);
+  if (!confirm(`${r.saem.length} lançamentos pessoais saem da Casa e voltam ao Dinheiro` + (r.voltam.length ? `, e ${r.voltam.length} compras da casa saem do Dinheiro` : "") +
+    `. A Casa de ${MESES[ref.getMonth()]} passa de ${dinheiro(antesCasa)} para ${dinheiro(depoisCasa)}. Nada é apagado. Separar?`)) return;
+  const b = document.getElementById("separarAgora"); if (b) { b.disabled = true; b.textContent = "Guardando a cópia no Drive…"; }
+  const agora = new Date(), carimbo = hojeISO() + " " + String(agora.getHours()).padStart(2, "0") + "h" + String(agora.getMinutes()).padStart(2, "0");
+  const antesDin = Object.assign({}, livro.dono, { caderno:"dinheiro" });
+  try {
+    await Nuvem.copiaAvulsa("Controle Único - casa - antes de separar " + carimbo + ".json", JSON.stringify(livro.casa));
+    await Nuvem.copiaAvulsa("Controle Único - dinheiro - antes de separar " + carimbo + ".json", JSON.stringify(antesDin));
+  } catch(e) {
+    recado("Não consegui guardar a cópia no Drive, então não separei nada. Confira a internet e tente de novo.", true);
+    desenhar(); return;
+  }
+  const antes = { casa:JSON.parse(JSON.stringify(livro.casa)), din:JSON.parse(JSON.stringify(livro.dono)) };
+  livro.dono = arrumar.dono(Object.assign(VAZIO.dono(), r.din));
+  livro.casa = arrumar.casa(Object.assign(VAZIO.casa(), r.casa));
+  try { localStorage.removeItem(CH_TRAVA_DIN); } catch(e){}
+  try { localStorage.setItem(CH_SEPAROU, JSON.stringify({ quando:dataCurta(hojeISO()), saem:r.saem.length, antes,
+    depois:semData(livro.casa) + semData(livro.dono) })); } catch(e){}
+  salvar("dono"); salvar("casa");
+}
+// volta os dois cadernos como estavam, só enquanto nada mudou depois da separação
+function desfazerSeparar(){
+  const g = separacaoGuardada();
+  if (!g || g.depois !== semData(livro.casa) + semData(livro.dono)) return;
+  if (!confirm("Voltar os dois cadernos como estavam antes de separar? Os lançamentos pessoais voltam a aparecer na Casa.")) return;
+  livro.dono = arrumar.dono(Object.assign(VAZIO.dono(), g.antes.din));
+  livro.casa = arrumar.casa(Object.assign(VAZIO.casa(), g.antes.casa));
+  try { localStorage.removeItem(CH_SEPAROU); } catch(e){}
+  salvar("dono"); salvar("casa");
+}
+
+// ---------- telas ----------
+// A Carteira juntou Dinheiro e cripto (28/09/2026): aqui ela é a visão do dinheiro; a cripto é outra página.
+const ABAS = [["tudo","Tudo"],["carteira","Carteira"],["casa","Casa"]];
+
+const pct = (a, b) => b > 0 ? Math.max(0, Math.min(100, (Number(a) || 0) / b * 100)) : 0;
+const pctTxt = (a, b) => (b > 0 ? (a / b * 100) : 0).toLocaleString("pt-BR", { maximumFractionDigits:1 }) + "%";
+const redondo = v => (v < 0 ? "−" : "") + "R$ " + Math.round(Math.abs(Number(v) || 0)).toLocaleString("pt-BR");
+const sinalDin = v => (v < -0.005 ? "−" : "") + dinheiro(Math.abs(v));
+const semPonto = s => String(s || "").replace(/\.$/, "").replace(". (", " (");
+// na tela, categoria e descrição terminam com ponto (pedido dele, 02/10/2026); o dado guardado continua sem
+const comPonto = FormLancamento.comPonto;
+// O nome certo da reserva é "Reserva de emergência" (correção dele, 02/10/2026). O dado guardado
+// continua "Reserva", que é a chave das contas; só o que aparece na tela muda.
+const nomeCat = c => semPonto(c) === "Reserva" ? "Reserva de emergência" : semPonto(c);
+const dataCurta = d => (d || "").slice(8, 10) + "/" + (d || "").slice(5, 7);
+const nd = motivo => `<b class="nota" style="font-size:22px">—</b><small>${motivo}</small>`;
+
+function barraMes(){
+  return `<div class="mes"><button class="b redondo" data-mes="-1" aria-label="Mês anterior">‹</button>
+    <h1>${MESES[ref.getMonth()]} <span>${ref.getFullYear()}</span></h1>
+    <button class="b redondo" data-mes="1" aria-label="Próximo mês">›</button></div>`;
+}
+
+// Rosca como a da Carteira ("Onde está"), porque é o gráfico que ele gosta para ver partes de um todo.
+// itens: [rótulo, valor, cor, detalhe opcional]. A legenda ao lado leva o valor e a porcentagem.
+function rosca(itens, centro, aria){
+  itens = itens.filter(x => x[1] > 0.005);
+  const total = soma(itens, x => x[1]);
+  if (!total) return `<p class="vazio">Nada neste mês.</p>`;
+  const R0 = 68, C = 2 * Math.PI * R0, gap = itens.length > 1 ? 2 : 0; let acum = 0;
+  const fatias = itens.map(([rot, v, cor], i) => {
+    const f = v / total, len = Math.max(0.5, f * C - gap);
+    const s = `<circle class="fatia" data-i="${i}" cx="85" cy="85" r="${R0}" fill="none" stroke="${cor}" stroke-width="24"
+      stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-acum).toFixed(2)}" transform="rotate(-90 85 85)">
+      <title>${escH(rot)}: ${dinheiro(v)} (${pctTxt(v, total)})</title></circle>`;
+    acum += f * C; return s;
+  }).join("");
+  const meio = `<text class="centro1" x="85" y="80" text-anchor="middle">${escH(centro)}</text>
+    <text class="centro2" x="85" y="100" text-anchor="middle">${redondo(total)}</text>`;
+  const leg = itens.map(([rot, v, cor, det], i) => `<li data-i="${i}"><i style="background:${cor}"></i>
+    <span class="n">${escH(rot)}${det ? `<small>${escH(det)}</small>` : ""}</span><b>${dinheiro(v)}</b><span class="pc">${pctTxt(v, total)}</span></li>`).join("");
+  return `<div class="rosca"><svg viewBox="0 0 170 170" role="img" aria-label="${escH(aria)}">${fatias}${meio}</svg><ul class="leg">${leg}</ul></div>`;
+}
+
+// Partes de um todo numa barra só, com a mesma legenda da rosca.
+function barraPartes(itens, aria){
+  itens = itens.filter(x => x[1] > 0.005);
+  const total = soma(itens, x => x[1]);
+  if (!total) return `<p class="vazio">Nada guardado ainda.</p>`;
+  const faixas = itens.map(([rot, v, cor]) => `<i style="width:${(v / total * 100).toFixed(2)}%;background:${cor}" title="${escH(rot)}: ${dinheiro(v)}"></i>`).join("");
+  const leg = itens.map(([rot, v, cor, det]) => `<li><i style="background:${cor}"></i>
+    <span class="n">${escH(rot)}${det ? `<small>${escH(det)}</small>` : ""}</span><b>${dinheiro(v)}</b><span class="pc">${pctTxt(v, total)}</span></li>`).join("");
+  return `<div class="partes"><div class="pt-total"><span>Total</span><b>${dinheiro(total)}</b></div>
+    <div class="pilha" role="img" aria-label="${escH(aria)}">${faixas}</div><ul class="leg">${leg}</ul></div>`;
+}
+function metaReserva(reserva, meta){
+  if (!(meta > 0)) return "";
+  const falta = meta - reserva;
+  return `<div class="meta-r"><div class="l1"><span>Meta da reserva</span><b>${Math.round(pct(reserva, meta))}%</b></div>
+    <div class="trilho" role="img" aria-label="${Math.round(pct(reserva, meta))}% da meta"><i style="width:${pct(reserva, meta)}%"></i></div>
+    <small>${falta > 0.005 ? `faltam ${dinheiro(falta)} para ${dinheiro(meta)}` : `meta de ${dinheiro(meta)} alcançada`}</small></div>`;
+}
+
+// para onde foi o dinheiro do mês: despesas lançadas e fixos por categoria, mais a casa.
+// Sete fatias com cor e o resto junto em "Outros", para a rosca continuar legível.
+function porCategoria(km = chaveMes(ref)){
+  const s = {};
+  livro.dono.lancamentos.filter(doK(km)).filter(l => l.tipo === "Despesa" && (!l._financeiro || l.situacao === "Pago"))
+    .forEach(l => s[l.categoria] = (s[l.categoria] || 0) + (Number(l.valor) || 0));
+  livro.dono.gastosFixos.forEach(g => { const v = valorFixo(g, km); if (v) s[g.categoria] = (s[g.categoria] || 0) + v; });
+  const casa = contasCasa(km).pagou[livro.casa.pessoas[0]] || 0;
+  if (casa) s["Moradia (casa)"] = (s["Moradia (casa)"] || 0) + casa;
+  return Object.entries(s).filter(e => e[1] > 0.005).sort((a, b) => b[1] - a[1]);
+}
+function roscaCategorias(d){
+  const cats = porCategoria();
+  if (!cats.length) return `<p class="vazio">Nada saiu em ${MESES[ref.getMonth()]}.</p>`;
+  const cabem = cats.length > 8 ? 7 : 8;
+  const itens = cats.slice(0, cabem).map(([k, v], i) => [comPonto(k), v, `var(--c${i + 1})`]);
+  const resto = cats.slice(cabem);
+  if (resto.length) itens.push(["Outros.", soma(resto, e => e[1]), "var(--c8)", resto.map(e => semPonto(e[0])).join(", ") + "."]);
+  // a rosca conta todos os fixos do mês; "Gastei" só conta os que já venceram. A nota explica a diferença.
+  const vai = d && d.faltaSair > 0.005 ? `<p class="nota">Inclui ${dinheiro(d.faltaSair)} de fixos que ainda vão sair, por isso passa do "Gastei".</p>` : "";
+  return rosca(itens, "no mês", "Despesas do mês por categoria") + vai;
+}
+
+// Limite de gasto por categoria (aprovado por ele em 02/10/2026): ele diz quanto quer gastar no mês
+// em cada categoria e a tela mostra o quanto já foi, com aviso a partir de 80% e quando passa.
+// O gasto é o mesmo de "Gastos por categoria": lançamentos do mês mais os fixos da categoria.
+const limites = () => livro.dono.limites || (livro.dono.limites = {});
+const PERTO_DO_LIMITE = 0.8;
+function painelLimites(){
+  const gasto = Object.fromEntries(porCategoria()), lim = limites();
+  const itens = Object.keys(lim).filter(c => Number(lim[c]) > 0)
+    .map(c => ({ c, teto:Number(lim[c]), foi:gasto[c] || 0 })).sort((a, b) => b.foi / b.teto - a.foi / a.teto);
+  const linha = x => {
+    const r = x.foi / x.teto, cls = r > 1.0005 ? "passou" : r >= PERTO_DO_LIMITE ? "perto" : "";
+    const aviso = cls === "passou" ? `passou ${dinheiro(x.foi - x.teto)}` : cls === "perto" ? `perto do limite: sobram ${dinheiro(x.teto - x.foi)}` : `sobram ${dinheiro(x.teto - x.foi)}`;
+    return `<li class="${cls}"><div class="l1"><b>${escH(comPonto(x.c))}</b><span>${dinheiro(x.foi)} de ${dinheiro(x.teto)}</span></div>
+      <div class="trilho" role="img" aria-label="${Math.round(r * 100)}% do limite"><i style="width:${pct(x.foi, x.teto)}%"></i></div>
+      <div class="l2"><b>${aviso}</b><button type="button" data-limite-x="${escH(x.c)}">tirar limite</button></div></li>`;
+  };
+  const cats = catsDinheiro().filter(t => t !== "Reserva" && t !== "Outras entradas");
+  const form = `<details class="novo"><summary>${itens.length ? "Mudar ou criar limite" : "+ Criar limite"}</summary><form class="linha" id="fLimite">
+    <div><label>Categoria</label><select name="categoria" required><option value="" disabled selected hidden>escolha…</option>${cats.map(t => `<option value="${t}">${comPonto(t)}</option>`).join("")}</select></div>
+    <div><label>Limite por mês</label><input type="text" name="valor" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00" required></div>
+    <div><button class="b p" type="submit">Guardar</button></div>
+  </form></details>`;
+  return `<section class="painel"><h2>Limites por categoria</h2>${itens.length ? `<ul class="lim">${itens.map(linha).join("")}</ul>`
+    : `<p class="nota" style="margin-top:0">Diga quanto quer gastar por mês numa categoria e o app avisa quando chegar perto.</p>`}${form}</section>`;
+}
+
+// Minhas categorias: criar uma nova (Pessoal ou Casa) e tirar as que ele criou
+function painelCategorias(){
+  const minhas = [["dono", "Pessoal"], ["casa", "Casa"]].flatMap(([cad, onde]) => extrasDe(cad).map(x => ({ ...x, cad, onde })));
+  const opGrupo = base => base.map(([n]) => `<option>${escH(n)}</option>`).join("") + `<option>${GRUPO_MINHAS}</option>`;
+  return `<section class="painel"><h2>Minhas categorias</h2>
+    ${minhas.length ? `<ul class="cat-minhas">${minhas.map(x => `<li><b>${escH(x.nome)}</b><span>${x.onde} · ${escH(x.grupo || GRUPO_MINHAS)}</span>
+      <button type="button" class="x" data-cat-tirar="${x.cad}:${escH(x.id)}" aria-label="Tirar a categoria ${escH(x.nome)}" title="Tirar">×</button></li>`).join("")}</ul>`
+      : `<p class="nota" style="margin-top:0">As categorias de fábrica não mudam. Se faltar uma, crie aqui: ela aparece no formulário de lançamento, nos limites e no importador.</p>`}
+    <details class="novo"><summary>+ Nova categoria</summary><form class="linha" id="fCategoria">
+      <div><label>Nome</label><input type="text" name="nome" maxlength="30" autocomplete="off" required></div>
+      <div><label>De onde</label><select name="cad"><option value="dono">Pessoal</option><option value="casa">Casa</option></select></div>
+      <div><label>Grupo</label><select name="grupo" data-grupo-pessoal="${escH(opGrupo(Categorias.GRUPOS_DINHEIRO))}" data-grupo-casa="${escH(opGrupo(Categorias.GRUPOS_CASA))}">${opGrupo(Categorias.GRUPOS_DINHEIRO)}</select></div>
+      <div><button class="b p" type="submit">Criar</button></div>
+    </form></details></section>`;
+}
+
+function roscaCasa(c){
+  const [p1, p2] = livro.casa.pessoas;
+  return rosca([[primeiro(p1), c.pagou[p1], "var(--c1)"], [primeiro(p2), c.pagou[p2], "var(--c2)"]], "casa no mês", "Quem pagou a casa");
+}
+
+// Situação do mês: primeiro o que de fato entrou e saiu, depois o que ainda vem,
+// e a seta dizendo se dá para gastar (pedido dele, 27/09/2026).
+function veredito(d){
+  const agora = new Date(), km = chaveMes(ref), hoje = chaveMes(agora);
+  const nome = MESES[ref.getMonth()];
+  const seta = cima => `<span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${cima ? '<path d="M12 19V5M5 12l7-7 7 7"/>' : '<path d="M12 5v14M5 12l7 7 7-7"/>'}</svg></span>`;
+  const caixa = (cls, cima, titulo, texto) => `<div class="veredito ${cls}"><div class="topo-v">${seta(cima)}<b>${titulo}</b></div><p>${texto}</p></div>`;
+  // Aparelho novo, ou depois de "Sair deste aparelho": sem entrar e sem nada guardado aqui, os R$ 0,00
+  // não são o mês dele, e a caixa pedia para "segurar até entrar" (05/10/2026). Agora pede para entrar.
+  const semNada = !livro.dono.lancamentos.length && !livro.dono.gastosFixos.length && !livro.casa.lancamentos.length;
+  if (semNada && !Nuvem.conectado()) return `<div class="veredito"><div class="topo-v"><b>Entre para ver o seu mês</b></div><p>Os números aparecem depois que você entrar com o Google, no botão Entrar lá em cima.</p></div>`;
+  if (km < hoje) return d.sobra >= 0
+    ? caixa("pos", true, "Fechou positivo", `${nome[0].toUpperCase() + nome.slice(1)} terminou com ${dinheiro(d.sobra)} de sobra.`)
+    : caixa("neg", false, "Fechou negativo", `${nome[0].toUpperCase() + nome.slice(1)} terminou com falta de ${dinheiro(-d.sobra)}.`);
+  const fim = d.fimDoMes;
+  // Sem o previsto da Clínica não dá para dizer "mesmo que entre tudo o que falta": não se sabe quanto falta
+  // (antes a caixa podia dizer "Não pode gastar" só porque a Clínica ainda não tinha aberto).
+  if (d.falta === null) return `<div class="veredito"><div class="topo-v"><b>Ainda sem previsão</b></div><p>Hoje está em ${sinalDin(d.sobra)}. Para dizer se dá para gastar falta o previsto da Clínica, que ainda não abriu neste aparelho.</p></div>`;
+  const semPrevisto = "";
+  // mês que ainda não começou: é previsão, não "hoje"
+  if (km > hoje) return fim < -0.005
+    ? caixa("neg", false, "Previsão no vermelho", `Com o previsto da agenda e os fixos marcados, ${nome} fecha em ${sinalDin(fim)}.`)
+    : caixa("pos", true, "Previsão no azul", `Com o previsto da agenda e os fixos marcados, ${nome} fecha em ${dinheiro(fim)}.`);
+  if (fim < -0.005) return caixa("neg", false, "Não pode gastar",
+    `Mesmo que entre tudo o que falta, ${nome} fecha em ${sinalDin(fim)}${semPrevisto}.`);
+  // saldo zerado também é "segure": o que fecha o mês no azul ainda não entrou (01/10/2026: com saldo
+  // de R$ 0,00 a caixa dizia "Pode gastar até R$ X", que é dinheiro que ele ainda vai receber)
+  if (d.sobra < 0.005) return caixa("warn", true, "Segure até entrar",
+    `Hoje está em ${sinalDin(d.sobra)}. Se entrar o previsto, fecha em ${dinheiro(fim)}: dá para gastar isso, mas só depois que entrar${semPrevisto}.`);
+  // o que dá para gastar hoje é o que já está na mão, sem passar do que sobra no fim do mês
+  if (d.sobra < fim - 0.005) return caixa("pos", true, "Pode gastar",
+    `Hoje, até ${dinheiro(d.sobra)}. Se entrar o previsto, até ${dinheiro(fim)} no mês${semPrevisto}.`);
+  return caixa("pos", true, "Pode gastar", `Até ${dinheiro(fim)} sem fechar ${nome} no vermelho${semPrevisto}.`);
+}
+
+// O card do alto da aba Tudo: o que entrou e saiu, o que ainda vem e a seta. Também fica no alto da Carteira.
+// Pedido dele (05/10/2026): embaixo de Recebi, uma linha com o resgate e o aporte do mês na reserva.
+// O resgate não entra no total de Recebi; ele só ajusta o Saldo agora.
+function cardSituacao(d){
+  const outros = d.entrou - d.dePacientes;
+  const lancado = d.saiu - d.fixosMes - d.minhaCasa;
+  const corrente = chaveMes(ref) === chaveMes(new Date());
+  return `
+  <section class="painel"><h2>Situação do mês<span class="dir">${corrente ? "até hoje, " + dataCurta(hojeISO()) : ""}</span></h2>
+    <div class="situ seis">${veredito(d)}<div class="nums">
+      <div class="linha-k">
+        <div class="k"><span>Recebi</span><b class="pos">${dinheiro(d.entrou)}</b><small>${dinheiro(d.dePacientes)} de pacientes</small>${outros > 0.005 ? `<small>${dinheiro(outros)} de outras entradas</small>` : ""}${d.resgatesMes > 0.005 ? `<small class="k-res">fora isso, ${dinheiro(d.resgatesMes)} resgatados da reserva</small>` : ""}${d.aportesMes > 0.005 ? `<small class="k-res">${dinheiro(d.aportesMes)} guardados na reserva, não gastos</small>` : ""}</div>
+        <div class="k"><span>Gastei</span><b>${dinheiro(d.saiu)}</b>${d.entrou > 0.005 ? `<em class="pct-k${d.saiu > d.entrou + 0.005 ? " neg" : ""}">${Math.round(d.saiu / d.entrou * 100)}% do que recebi</em>` : ""}<small>${dinheiro(lancado)} lançados</small><small>${dinheiro(d.fixosMes)} de fixos</small><small>${dinheiro(d.minhaCasa)} da casa</small></div>
+        <div class="k destaque"><span>${d.passado ? "Saldo do mês" : "Saldo agora"}</span><b class="${d.sobra < -0.005 ? "neg" : "pos"}">${sinalDin(d.sobra)}</b><small>recebi menos gastei${d.aportesMes || d.resgatesMes ? ", ajustado pela reserva" : ""}</small></div>
+      </div>
+      <div class="linha-k">
+        <div class="k"><span>${d.passado ? "Ficou para receber" : "Ainda vou receber"}</span>${d.falta === null ? nd("abra a Clínica para calcular") : `<b>${dinheiro(d.falta)}</b><small>${d.passado ? "sessões do mês que os pacientes ainda não pagaram" : "previsto da agenda menos o que os pacientes já pagaram"}</small>`}</div>
+        <div class="k"><span>Ainda vai sair</span>${d.faltaSair === null ? nd("mês fechado") : `<b>${dinheiro(d.faltaSair)}</b><small>${corrente ? `fixos que vencem depois de hoje${d.semDia ? (d.semDia === 1 ? "; o fixo sem dia marcado já conta em Gastei" : `; os ${d.semDia} fixos sem dia marcado já contam em Gastei`) : ""}` : "fixos do mês"}</small>`}</div>
+        <div class="k destaque"><span>${d.passado ? "Fechou o mês em" : "Fecha o mês em"}</span><b class="${d.fimDoMes < -0.005 ? "neg" : "pos"}">${sinalDin(d.fimDoMes)}</b><small>${d.passado ? "o que entrou menos o que saiu no mês" : "saldo mais o que vou receber, menos o que vai sair"}</small></div>
+      </div>
+    </div></div>
+    ${!d.passado && fixosParaCopiar(chaveMes(ref)).length ? `<p class="nota" style="margin:10px 0 0">Os gastos fixos de ${MESES[ref.getMonth()]} ainda não foram copiados do mês anterior, então "Ainda vai sair" e "Fecha o mês em" estão sem eles. Copie em Gastos fixos.</p>` : ""}
+  </section>
+`;
+}
+
+// Na aba Tudo, a lista de tudo o que ele lançou (pedido dele, 02/10/2026: "histórico de todos"): os lançamentos
+// pessoais e, da Casa, só as compras dele. As da Pessoa 2 ficam na tela da Casa. Abre com todos os meses, separados
+// por mês, os mais novos em cima; "Só este mês" volta ao mês aberto (19/10/2026).
+let meusEscopo = "todos", meusLimite = 60;
+function painelMeusLancamentos(){
+  const eu = livro.casa.pessoas[0], filtro = meusEscopo === "mes" ? noMes : () => true;
+  const todos = livro.dono.lancamentos.filter(filtro).map(l => ({ l, onde:"dono" }))
+    .concat(livro.casa.lancamentos.filter(filtro).filter(l => l.quem === eu).map(l => ({ l, onde:"casa" })))
+    .map((x, i) => ({ ...x, i }))
+    .sort((a, b) => (b.l.data || "").localeCompare(a.l.data || "") || b.i - a.i);
+  const itens = meusEscopo === "mes" ? todos : todos.slice(0, meusLimite);
+  const linha = ({ l, onde }) => {
+    const casa = onde === "casa", lugar = casa ? "Casa" : "Pessoal";
+    const cls = !casa && (l.tipo === "Receita" || l.tipo === "Resgate") ? "pos" : "";
+    const sinal = cls ? "+ " : casa || l.tipo === "Despesa" ? "− " : "";
+    const cat = nomeCat(l.categoria) + (!casa && l.tipo !== "Despesa" ? " · " + semPonto(l.tipo) : "");
+    return `<tr class="clic" data-editar="${onde}:${escH(l.id)}" tabindex="0" title="Editar"><td class="c-data">${dataCurta(l.data)}</td>
+      <td class="c-desc"><b>${escH(comPonto(l.descricao && l.descricao !== "-" ? l.descricao : nomeCat(l.categoria)))}</b><span class="so-cel">${escH(comPonto(lugar + " · " + cat))}</span></td>
+      <td class="c-cat">${lugar}.</td><td class="c-forma">${escH(comPonto(cat))}</td>
+      <td class="c-val dir ${cls}">${sinal}${dinheiro(l.valor)}</td>
+      <td class="c-x"><button class="x" data-apagar="${onde}:lancamentos:${escH(l.id)}" aria-label="Apagar" title="Apagar">×</button></td></tr>`;
+  };
+  // com todos os meses, uma faixa com o nome do mês antes do primeiro lançamento de cada um
+  const nMes = {}; todos.forEach(x => { const k = (x.l.data || "").slice(0, 7); nMes[k] = (nMes[k] || 0) + 1; });
+  let mesAtual = "";
+  const corpo = itens.map(x => {
+    const k = (x.l.data || "").slice(0, 7);
+    if (meusEscopo === "mes" || k === mesAtual) return linha(x);
+    mesAtual = k;
+    const nome = k ? MESES[Number(k.slice(5, 7)) - 1] + " de " + k.slice(0, 4) : "Sem data";
+    return `<tr class="mes-cab"><th colspan="6" scope="colgroup">${nome}<span> · ${nMes[k]} ${nMes[k] === 1 ? "lançamento" : "lançamentos"}</span></th></tr>` + linha(x);
+  }).join("");
+  const escopo = `<div class="subabas" role="group" aria-label="Quais lançamentos mostrar">
+    <button type="button" data-meus="todos" aria-pressed="${meusEscopo === "todos"}">Todos os meses</button>
+    <button type="button" data-meus="mes" aria-pressed="${meusEscopo === "mes"}">Só ${MESES[ref.getMonth()]}</button></div>`;
+  const conta = meusEscopo === "mes" ? `${todos.length} no mês` : `${todos.length} ao todo`;
+  return `<section class="painel" style="margin-top:16px"><h2>Meus lançamentos<span class="dir">${conta}</span></h2>${escopo}
+    ${itens.length ? `<table class="t"><thead><tr><th>Dia</th><th>Descrição</th><th>De onde</th><th>Categoria</th><th class="dir">Valor</th><th><span class="so-leitor">Ações</span></th></tr></thead>
+      <tbody>${corpo}</tbody></table>
+      ${todos.length > itens.length ? `<p><button type="button" class="b" data-meus-mais>Mostrar mais ${Math.min(60, todos.length - itens.length)} (faltam ${todos.length - itens.length})</button></p>` : ""}
+      <p class="nota">Os seus lançamentos pessoais e as compras da casa que você pagou. As compras da Pessoa 2 aparecem na Casa.</p>`
+      : `<p class="vazio">${meusEscopo === "mes" ? `Nenhum lançamento seu em ${MESES[ref.getMonth()]}.` : "Nenhum lançamento seu ainda."}</p>`}</section>`;
+}
+
+function telaTudo(){
+  const d = contasDinheiro(), c = contasCasa(), cl = contasClinica(), cart = carteiraAgora();
+  const r = livro.dono.reserva;
+  const [p1, p2] = livro.casa.pessoas;
+  const partes = [["Reserva de emergência", d.reserva, "var(--c3)", ""],
+                  ["Cripto", cart ? cart.total : 0, "var(--c4)", cart ? "lida em " + new Date(cart.t).toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : ""]];
+  // com duas partes (ou menos) uma barra lê melhor que a rosca; a meta da reserva vem numa barra própria
+  const patrimonio = partes.filter(x => x[1] > 0.005).length <= 2
+    ? barraPartes(partes, "Patrimônio: reserva de emergência e cripto") + metaReserva(d.reserva, r.meta)
+    : rosca(partes, "patrimônio", "Patrimônio: reserva de emergência e cripto");
+
+  return barraMes() + painelSeparar() + painelPrecisa() + avisoFechamento() + cardSituacao(d) + formLancamento("") + `
+
+  <div class="duas inv">
+    <section class="painel"><h2>Patrimônio${chaveMes(ref) !== chaveMes(new Date()) ? `<span class="dir">hoje, ${dataCurta(hojeISO())}</span>` : ""}</h2>${patrimonio}
+      ${cart ? "" : `<p class="nota">Abra a Carteira cripto uma vez neste aparelho para o total dela entrar aqui.</p>`}</section>
+    <section class="painel"><h2>Gastos por categoria</h2>${roscaCategorias(d)}</section>
+  </div>
+
+  <div class="duas igual">
+    <section class="painel"><h2>Casa${c.total > 0.005 ? `<span class="dir"><span class="selo-b">${escH(balanca(c, p1, p2))}</span></span>` : ""}</h2>${roscaCasa(c)}
+      <p class="nota">A balança mostra quem pagou mais no mês, não uma conta a acertar.</p></section>
+    <section class="painel"><h2>Clínica</h2>
+      <div class="stats duas-col">
+        <div class="stat"><span>Pacientes na agenda</span><b>${cl.ativos === null ? "—" : cl.ativos}</b></div>
+        <div class="stat"><span>Sessões realizadas</span><b>${cl.sessoes === null ? "—" : cl.sessoes}</b>${cl.aConfirmar ? `<small>${cl.aConfirmar} a confirmar</small>` : ""}</div>
+        <div class="stat"><span>Previsto</span><b>${cl.previsto === null ? "—" : dinheiro(cl.previsto)}</b>${cl.previstoTriagem ? `<small>+ ${dinheiro(cl.previstoTriagem)} em triagem</small>` : `<small>só ativos</small>`}</div>
+        <div class="stat"><span>Recebido</span><b>${dinheiro(cl.recebido)}</b>${cl.previsto ? `<div class="trilho"><i style="width:${pct(cl.pacientes, cl.previsto)}%"></i></div><small>${Math.round(pct(cl.pacientes, cl.previsto))}% do previsto, só pacientes</small>` : ""}</div>
+      </div></section>
+  </div>
+
+  ${painelMeusLancamentos()}
+
+  <details class="origem"><summary>De onde vem cada número</summary>
+    Recebi: receitas soltas do Dinheiro mais os pagamentos da Clínica (pacientes e acertos). Gastei: despesas lançadas no mês,
+    sem a categoria moradia, mais os gastos fixos do mês e o que você pagou na casa, como manda o sistema Ciclo do Dinheiro
+    do Mês. Saldo agora: recebi menos gastei, menos o que foi para a reserva (aporte) e mais o que saiu dela (resgate), como a linha Total
+    da planilha; o gasto feito com o dinheiro resgatado entra normalmente em Gastei. Ainda vou receber: a mesma conta do Painel da Clínica, pela agenda e pela cobrança de cada paciente, menos o que
+    os pacientes já pagaram. Ainda vai sair: gastos fixos com dia depois de hoje, que só entram em Gastei quando o dia chega (fixo sem dia conta como já pago). A seta compara o fim do mês com zero.
+    Cripto: o total da última vez que a Carteira cripto abriu neste aparelho.
+  </details>`;
+}
+
+function linhaLanc(l){
+  const cls = l.tipo === "Receita" || l.tipo === "Resgate" ? "pos" : "";
+  const sinal = cls ? "+ " : l.tipo === "Despesa" ? "− " : "";
+  const tipo = l.tipo !== "Despesa" ? ` · ${semPonto(l.tipo)}` : "";
+  // linha composta leva um ponto só, no fim: "Reserva · Resgate." (correção dele, 02/10/2026)
+  const cat = nomeCat(l.categoria), forma = semPonto(l.forma);
+  return `<tr class="clic" data-editar="dono:${escH(l.id)}" tabindex="0" title="Editar"><td class="c-data">${dataCurta(l.data)}</td>
+    <td class="c-desc"><b>${escH(comPonto(l.descricao && l.descricao !== "-" ? l.descricao : cat))}</b><span class="so-cel">${escH(comPonto([cat, forma].filter(Boolean).join(" · ") + tipo))}</span></td>
+    <td class="c-cat">${escH(comPonto(cat + tipo))}</td><td class="c-forma">${escH(comPonto(forma))}</td>
+    <td class="c-val dir ${cls}">${sinal}${dinheiro(l.valor)}</td>
+    <td class="c-x"><button class="x" data-apagar="dono:lancamentos:${escH(l.id)}" aria-label="Apagar" title="Apagar">×</button></td></tr>`;
+}
+
+// ---------- pendências: quem deve a ele e a quem ele deve ----------
+// Era a última aba viva da planilha congelada (decisão dele de 01/10/2026: vira lista própria do
+// app). É só acompanhamento: nenhuma conta do mês lê esta lista. O dinheiro que entra ou sai por
+// conta de uma pendência continua sendo lançado no lugar de sempre.
+// valor digitado à mão: "1.250,50", "1.250" e "1250.5" valem. Com vírgula, ou com ponto seguido
+// de três dígitos, o ponto é separador de milhar.
+function lerValorBR(t){
+  const limpo = String(t == null ? "" : t).replace(/[^0-9.,]/g, "");
+  return Number(limpo.indexOf(",") >= 0 || /^\d{1,3}(\.\d{3})+$/.test(limpo) ? limpo.replace(/\./g, "").replace(",", ".") : limpo);
+}
+const pendencias = () => livro.dono.pendencias || (livro.dono.pendencias = []);
+const restantePend = p => Math.max(0, (Number(p.total) || 0) - (Number(p.pago) || 0));
+const pendQuitada = p => !!p.quitada || restantePend(p) < 0.005;
+const chavePend = p => [String(p.nome || "").trim().toLowerCase(), p.tipo, Number(p.total) || 0, p.inicio || ""].join("|");
+// recado na tela, no lugar da janelinha do navegador: resultado de importar e erro de leitura (19/10/2026)
+function recado(texto, erro){
+  document.querySelectorAll(".recado").forEach(r => r.remove());
+  const r = document.createElement("div");
+  r.className = "recado" + (erro ? " erro" : ""); r.setAttribute("role", erro ? "alert" : "status");
+  r.innerHTML = `<span></span><button type="button" aria-label="Fechar o recado">×</button>`;
+  r.firstChild.textContent = texto;
+  r.lastChild.onclick = () => r.remove();
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), erro ? 12000 : 7000);
+}
+let pendParte = null;   // a pendência com o formulário de "recebi/paguei uma parte" aberto
+function painelPendencias(){
+  const todas = pendencias(), abertas = todas.filter(p => !pendQuitada(p)), fechadas = todas.filter(pendQuitada);
+  const linha = p => {
+    const falta = restantePend(p), feita = pendQuitada(p);
+    const sub = [p.origem, p.inicio ? "desde " + dataCurta(p.inicio) + "/" + p.inicio.slice(0, 4) : "", p.obs].filter(Boolean).map(escH).join(" · ");
+    return `<div class="pd${feita ? " feita" : ""}">
+      <div class="pd-quem"><b>${escH(p.nome)}</b><span>${sub || "&nbsp;"}</span></div>
+      <div class="pd-val"><b>${feita ? "quitada" : dinheiro(falta)}</b><span>${feita ? dinheiro(p.total) : `de ${dinheiro(p.total)}${Number(p.pago) > 0 ? ", já " + (p.tipo === "receber" ? "recebi " : "paguei ") + dinheiro(p.pago) : ""}`}</span>
+        ${feita || !(Number(p.pago) > 0) ? "" : `<div class="trilho"><i style="width:${pct(p.pago, p.total)}%"></i></div>`}</div>
+      <div class="pd-acoes">${feita ? `<button class="b s" data-pend-reabrir="${escH(p.id)}">Reabrir</button>`
+        : `<button class="b s" data-pend-pago="${escH(p.id)}" aria-expanded="${pendParte === p.id}">${p.tipo === "receber" ? "Recebi uma parte" : "Paguei uma parte"}</button><button class="b s" data-pend-quitar="${escH(p.id)}">Quitar</button>`}
+        <button class="x" data-pend-apagar="${escH(p.id)}" aria-label="Apagar" title="Apagar">×</button></div>
+      ${!feita && pendParte === p.id ? `<form class="pd-parte" data-pend-parte="${escH(p.id)}">
+        <label>Quanto ${p.tipo === "receber" ? "você recebeu" : "você pagou"} agora? Faltam ${dinheiro(falta)}.<input name="valor" inputmode="decimal" autocomplete="off" data-dinheiro placeholder="0,00"></label>
+        <button class="b p" type="submit">Registrar</button><button class="b s" type="button" data-pend-parte-nao>Cancelar</button></form>` : ""}</div>`;
+  };
+  // Tela própria (01/10/2026: no fim da tela do Dinheiro ele achou a lista mal organizada): os três
+  // totais em cima e, lado a lado, quem deve a ele e a quem ele deve, do maior para o menor.
+  const doTipo = tipo => abertas.filter(p => p.tipo === tipo).sort((x, y) => restantePend(y) - restantePend(x));
+  const aReceber = soma(doTipo("receber"), restantePend), aPagar = soma(doTipo("pagar"), restantePend);
+  const grupo = (tipo, titulo) => {
+    const l = doTipo(tipo);
+    return `<section class="painel"><h2>${titulo}<span class="dir">${l.length} em aberto</span></h2>` +
+      (l.length ? l.map(linha).join("") : `<p class="vazio">Nada em aberto.</p>`) + `</section>`;
+  };
+  const form = `<details class="novo"><summary>+ Nova pendência</summary><form class="linha" id="fPend">
+    <div><label>Tipo</label><select name="tipo"><option value="receber">a receber (me devem)</option><option value="pagar">a pagar (eu devo)</option></select></div>
+    <div style="grid-column:span 2"><label>De quem, ou para quem</label><input name="nome" required autocomplete="off"></div>
+    <div><label>Origem</label><input name="origem" list="pendOrigens" placeholder="opcional" autocomplete="off">
+      <datalist id="pendOrigens"><option>Prática Clínica</option><option>Empréstimo</option><option>Viagem</option><option>Multa</option><option>Outro</option></datalist></div>
+    <div><label>Valor total</label><input type="text" name="total" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00" required></div>
+    <div><label>Já foi pago</label><input type="text" name="pago" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00"></div>
+    <div><label>Desde</label><input type="date" name="inicio" value="${hojeISO()}"></div>
+    <div style="grid-column:span 2"><label>Observação</label><input name="obs" placeholder="opcional" autocomplete="off"></div>
+    <div><button class="b p" type="submit">Guardar</button></div></form></details>`;
+  return `<div class="stats tres">
+      <div class="stat"><span>A receber</span><b class="pos">${dinheiro(aReceber)}</b><small>${doTipo("receber").length} em aberto</small></div>
+      <div class="stat"><span>A pagar</span><b>${dinheiro(aPagar)}</b><small>${doTipo("pagar").length} em aberto</small></div>
+      <div class="stat"><span>Diferença</span><b class="${aReceber - aPagar < -0.005 ? "neg" : ""}">${sinalDin(aReceber - aPagar)}</b><small>a receber menos a pagar</small></div>
+    </div>
+    <div class="bloco">${form}</div>
+    ${todas.length ? `<div class="duas igual" style="margin-top:0">${grupo("receber", "A receber")}${grupo("pagar", "A pagar")}</div>`
+      : `<section class="painel"><p class="vazio">Nenhuma pendência. Use "+ Nova pendência", ou traga as da planilha.</p></section>`}
+    ${fechadas.length ? `<section class="painel bloco"><details class="pd-fechadas" style="margin-top:0"><summary>Quitadas (${fechadas.length})</summary>${fechadas.map(linha).join("")}</details></section>` : ""}
+    <p class="nota" style="margin-top:14px">Esta lista só acompanha quem deve e quanto falta: ela não entra nas contas do mês. O dinheiro que entrar ou sair continua sendo lançado no lugar de sempre (recebimento de paciente na Clínica, o resto em "+ Novo lançamento").
+      <button class="b s" id="pendPlanilha" type="button" style="margin-left:6px">Trazer da planilha</button><input type="file" id="pendArquivo" accept=".xlsx" class="hidden"></p>`;
+}
+// Lê a aba Pendências da Controle Financeiro.xlsx no navegador e acrescenta o que ainda não está aqui
+// (mesmo nome, tipo, valor total e data de início contam como a mesma pendência).
+async function importarPendencias(arquivo){
+  const abas = await lerXlsx(await arquivo.arrayBuffer());
+  const semAcento = s => String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const aba = abas.find(x => semAcento(x.nome).indexOf("pend") === 0);
+  if (!aba) throw new Error('não achei a aba "Pendências" nesse arquivo');
+  const cab = (aba.linhas[0] || []).map(semAcento);
+  const acha = (padrao, reserva) => { const i = cab.findIndex(t => padrao.test(t)); return i >= 0 ? i : reserva; };
+  const c = { nome:acha(/nome/, 0), tipo:acha(/^tipo/, 1), origem:acha(/origem/, 2), inicio:acha(/inicio/, 3), fim:acha(/fim|final|termino/, 4),
+              total:acha(/total/, 5), pago:acha(/pago/, 6), status:acha(/status/, 8), obs:acha(/observ/, 9) };
+  // data do Excel (número de série) ou texto AAAA-MM-DD, que é como a planilha baixada do app escreve
+  const dataDe = v => typeof v === "number" && v > 30000 && v < 80000 ? new Date(Math.round((v - 25569) * 86400000)).toISOString().slice(0, 10)
+    : /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? String(v) : "";
+  const semPt = s => String(s == null ? "" : s).replace(/\.+\s*$/, "").trim();
+  const jaTem = new Set(pendencias().map(chavePend));
+  let novas = 0, repetidas = 0;
+  aba.linhas.slice(1).forEach(l => {
+    const nome = semPt(l[c.nome]), total = Number(l[c.total]);
+    if (!nome || nome === "-" || !(total > 0)) return;
+    // Na planilha, "A pagar" e "A receber" são do ponto de vista de quem está no nome ("Fulano, A pagar" é o
+    // Fulano pagando a Dono). No app, "a receber" e "a pagar" são de Dono: por isso se inverte (correção dele, 03/10/2026).
+    const p = { id:novoId(), nome, tipo: semAcento(l[c.tipo]).indexOf("pagar") >= 0 ? "receber" : "pagar", origem:semPt(l[c.origem]),
+      inicio:dataDe(l[c.inicio]), fim:dataDe(l[c.fim]), total, pago:Number(l[c.pago]) || 0, obs:semPt(l[c.obs]) === "-" ? "" : semPt(l[c.obs]) };
+    if (semAcento(l[c.status]).indexOf("quitad") === 0) p.quitada = true;
+    if (jaTem.has(chavePend(p))) { repetidas++; return; }
+    jaTem.add(chavePend(p)); pendencias().push(p); novas++;
+  });
+  return { novas, repetidas };
+}
+
+// O Dinheiro em quatro telas (pedido dele, 01/10/2026: fixos e pendências empilhados no fim da
+// tela ficavam mal organizados). A chave fica no alto; o mês aberto vale para todas.
+const VISTAS_DIN = [["mes","Lançamentos"],["fixos",'<span class="so-larg">Gastos fixos</span><span class="so-cel">Fixos</span>'],["pend","Pendências"],["hist",'<span class="so-larg">Mês a mês</span><span class="so-cel">Meses</span>'],["fech",'<span class="so-larg">Fechamento</span><span class="so-cel">Fechamento</span>']];
+let vistaDin = "mes";
+// o mês que a Tudo mostrava antes de "Ver o fechamento": ao voltar para a Tudo, ela volta a ele
+let voltaDoFech = null;
+function subabasDinheiro(){
+  const n = pendencias().filter(p => !pendQuitada(p)).length;
+  return `<div class="subabas" role="group" aria-label="O que mostrar no Dinheiro">${VISTAS_DIN.map(([k, nome]) =>
+    `<button type="button" data-vd="${k}" aria-pressed="${k === vistaDin}">${nome}${k === "pend" && n ? `<em>${n}</em>` : ""}</button>`).join("")}</div>`;
+}
+
+// Gastos fixos separados pelo que interessa no mês: o que ainda vai sair, o que já saiu e,
+// recolhido, o que não cobra neste mês. Dentro de cada grupo, na ordem do dia.
+function vistaFixos(){
+  const km = chaveMes(ref), nome = MESES[ref.getMonth()];
+  const hojeD = new Date(), mesCorrente = km === chaveMes(hojeD), mesPassado = km < chaveMes(hojeD);
+  const porDia = (a, b) => ((Number(a.dia) || 99) - (Number(b.dia) || 99)) || (valorFixo(b, km) - valorFixo(a, km));
+  const cobra = livro.dono.gastosFixos.filter(g => valorFixo(g, km) > 0).sort(porDia);
+  const fora = livro.dono.gastosFixos.filter(g => !(valorFixo(g, km) > 0)).sort(porDia);
+  // a mesma regra da Situação do mês: fixo sem dia conta como já saiu; mês futuro, nada saiu ainda
+  const saiu = g => mesPassado || (mesCorrente && (!diaFixo(g, km) || diaFixo(g, km) <= hojeD.getDate()));
+  const jaSaiu = cobra.filter(saiu), vaiSair = cobra.filter(g => !saiu(g));
+  const total = l => soma(l, g => valorFixo(g, km));
+  const tabela = lista => `<table class="t fixos"><thead><tr><th>Gasto</th><th>Categoria</th><th class="dir">Dia</th><th class="dir">Valor em ${nome}</th><th><span class="so-leitor">Ações</span></th></tr></thead><tbody>
+      ${lista.map(g => `<tr${valorFixo(g, km) > 0 ? "" : ' class="fx-fora"'}><td class="c-desc"><b>${escH(comPonto(g.descricao))}</b>${!Number(g.dia) && valorFixo(g, km) > 0 ? `<span class="fx-sit">sem dia marcado${mesCorrente ? ": conta como já saiu" : ""}</span>` : ""}<span class="so-cel">${escH(comPonto(g.categoria))}</span></td>
+        <td class="c-cat">${escH(comPonto(g.categoria))}</td>
+        <td class="dir"><input class="dia" type="number" min="1" max="31" inputmode="numeric" data-dia="${escH(g.id)}" value="${g.dia || ""}" placeholder="dia" aria-label="Dia do mês"></td>
+        <td class="dir"><input type="text" inputmode="numeric" autocomplete="off" data-dinheiro data-valorfixo="${escH(g.id)}" value="${valorCampo(valorFixo(g, km))}" placeholder="—" aria-label="Valor em ${nome}"></td>
+        <td class="c-x"><button class="x" data-apagar-fixo="${escH(g.id)}" aria-label="Tirar a partir de ${nome}">×</button></td></tr>`).join("")}</tbody></table>`;
+  // Conta da casa cadastrada também como fixo (ex.: condomínio): se no mesmo mês houver compra dele na
+  // Casa com essa categoria, o valor pode estar entrando duas vezes no mês. Só avisa; nada muda sozinho.
+  const txt = s => semPonto(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const contasDaCasa = (Categorias.GRUPOS_CASA.find(x => x[0] === "Contas da casa") || [, []])[1];
+  const naCasa = new Set(livro.casa.lancamentos.filter(noMes).filter(l => l.quem === livro.casa.pessoas[0]).map(l => txt(l.categoria)));
+  const dobra = cobra.map(g => [g, contasDaCasa.find(c => naCasa.has(txt(c)) && new RegExp("\\b" + txt(c) + "\\b").test(txt(g.descricao) + " " + txt(g.categoria)))]).filter(x => x[1]);
+  const avisoDobra = dobra.length ? `<section class="painel bloco aviso-fx"><p>Confira se não está contando duas vezes: ${dobra.map(([g, c]) => `${escH(semPonto(g.descricao))} está nos fixos e você também lançou ${escH(c)} na Casa em ${nome}`).join("; ")}. Os dois entram no seu mês.</p></section>` : "";
+  const grupo = (titulo, lista) => lista.length ? `<section class="painel bloco"><h2>${titulo}<span class="dir">${lista.length} · ${dinheiro(total(lista))}</span></h2>${tabela(lista)}</section>` : "";
+
+  const formFixo = `<details class="novo"><summary>+ Novo gasto fixo</summary><form class="linha" id="fFixo">
+    <div style="grid-column:span 2"><label>Gasto fixo</label><input name="descricao" placeholder="assinatura, conta" required></div>
+    <div><label>Categoria</label><select name="categoria" required><option value="" disabled selected hidden>escolha…</option>${catsDinheiro().filter(t => t !== "Reserva" && t !== "Outras entradas").map(t => `<option value="${t}">${comPonto(t)}</option>`).join("")}</select></div>
+    <div><label>Dia do mês</label><input type="number" name="dia" min="1" max="31" inputmode="numeric" required></div>
+    <div><label>Valor por mês</label><input type="text" name="valor" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00" required></div>
+    <div><button class="b p" type="submit">Cadastrar deste mês até dezembro</button></div>
+  </form></details>`;
+
+  return `<div class="stats tres" style="margin-top:0">
+      <div class="stat"><span>Fixos de ${nome}</span><b>${dinheiro(total(cobra))}</b><small>${cobra.length} ${cobra.length === 1 ? "conta" : "contas"}</small></div>
+      <div class="stat"><span>Já saiu</span><b>${dinheiro(total(jaSaiu))}</b><small>${jaSaiu.length} de ${cobra.length}</small></div>
+      <div class="stat"><span>Ainda vai sair</span><b class="${vaiSair.length ? "warn" : ""}">${dinheiro(total(vaiSair))}</b><small>${vaiSair.length ? (mesCorrente && diaFixo(vaiSair[0], km) ? "próximo: dia " + diaFixo(vaiSair[0], km) : vaiSair.length + " de " + cobra.length) : "nada a vencer"}</small></div>
+    </div>
+    ${copiaFixos(km, cobra.length)}${avisoDobra}
+    <div class="bloco">${formFixo}</div>
+    ${livro.dono.gastosFixos.length ? "" : `<section class="painel"><p class="vazio">Nenhum gasto fixo cadastrado.</p></section>`}
+    <div class="fx-grupos">${grupo(mesCorrente ? "Ainda vai sair" : "Vai sair em " + nome, vaiSair)}${grupo(mesCorrente ? "Já saiu" : "Saiu em " + nome, jaSaiu)}</div>
+    ${fora.length ? `<section class="painel bloco"><details class="fx-fora-d"><summary>Não cobram em ${nome} (${fora.length})</summary>${tabela(fora)}</details></section>` : ""}
+    <p class="nota" style="margin-top:14px">O dia é o da cobrança (no cartão, o dia da compra). Com o dia marcado, o fixo só entra em "Gastei" quando ele chega; antes disso fica em "Ainda vai sair". Para um fixo deixar de cobrar em ${nome}, apague o valor dele.</p>`;
+}
+
+// Os fixos novos vão só até dezembro. Quando um mês não tem nenhum fixo e o anterior tinha,
+// oferece copiar os valores do mês anterior. Só preenche o mês vazio; nada do que já existe muda.
+function mesAnterior(km){ const d = new Date(Number(km.slice(0, 4)), Number(km.slice(5, 7)) - 2, 1); return chaveMes(d); }
+function fixosParaCopiar(km){
+  const ant = mesAnterior(km);
+  return livro.dono.gastosFixos.filter(g => g.valores && Number(g.valores[ant]) > 0 && g.valores[km] === undefined);
+}
+function copiaFixos(km, jaTem){
+  if (jaTem) return "";
+  const n = fixosParaCopiar(km).length; if (!n) return "";
+  const ant = MESES[Number(mesAnterior(km).slice(5, 7)) - 1];
+  return `<section class="painel bloco aviso-fx"><p>${MESES[ref.getMonth()][0].toUpperCase() + MESES[ref.getMonth()].slice(1)} ainda não tem gastos fixos. ${n} ${n === 1 ? "cobrou" : "cobraram"} em ${ant}.</p>
+    <button type="button" class="b p" id="copiarFixos">Copiar os fixos de ${ant}</button></section>`;
+}
+
+// Mês a mês: o gráfico e, embaixo, a mesma conta em lista, com o que sobrou em cada mês.
+function vistaHistorico(){
+  const serie = serieMeses();
+  const kHoje = chaveMes(new Date());
+  const linhas = serie.slice().reverse().filter(m => m.entrou > 0.005 || m.saiu > 0.005 || m.aportes > 0.005 || m.resgates > 0.005).map(m => {
+    const sobra = m.sobra;
+    const det = [`entrou ${dinheiro(m.entrou)}`, `saiu ${dinheiro(m.saiu)}`,
+      m.aportes > 0.005 ? `foi para a reserva ${dinheiro(m.aportes)}` : "", m.resgates > 0.005 ? `veio da reserva ${dinheiro(m.resgates)}` : "",
+      m.k === kHoje ? "mês em andamento" : ""].filter(Boolean).join(" · ");
+    return `<button type="button" class="hm" data-irmes="${m.k}"><span class="hm-m">${MESES[Number(m.k.slice(5, 7)) - 1]} ${m.k.slice(0, 4)}</span>
+      <span class="hm-d">${det}</span>
+      <b class="${sobra < -0.005 ? "neg" : "pos"}"><small>${sobra < -0.005 ? "faltou" : "sobrou"}</small>${dinheiro(Math.abs(sobra))}</b></button>`;
+  }).join("");
+  return `<section class="painel bloco"><h2>Entrou e saiu, mês a mês<span class="dir">toque num mês para abrir</span></h2>${GraficoMeses.desenhar(serie, { aberto:chaveMes(ref) })}</section>
+    ${linhas ? `<section class="painel bloco"><h2>Cada mês<span class="dir">meses com movimento</span></h2>${linhas}</section>` : ""}
+    <p class="nota" style="margin-top:14px">Entrou: o que a Clínica recebeu mais as receitas lançadas aqui. Saiu: despesas lançadas, gastos fixos que já saíram e o que você pagou na casa, o mesmo "Gastei" da Situação do mês. Sobrou ou faltou: entrou menos saiu, menos o que foi para a reserva e mais o que veio dela; no mês em andamento é o mesmo "Saldo agora" da Situação do mês. As barras mostram só o que entrou e saiu.</p>`;
+}
+
+// ---------- Fechamento do mês (05/10/2026) ----------
+// O resumo de um mês que já acabou: como fechou, o que mudou contra os meses de antes e o que fugiu
+// do normal, no Dinheiro e na Casa. Só lê os cadernos; nada aqui grava.
+// "Normal" é a média dos meses anteriores com movimento (até 6) no Dinheiro e, na Casa, a mesma média
+// do card da Casa (meses fechados desde CASA_MEDIA_DESDE).
+const NORMAL_MESES = 6;
+const FORA_PCT = 0.3, FORA_MIN = 100;   // fugiu do normal: 30% e pelo menos R$ 100 de diferença
+const somaMes = (k, n) => chaveMes(new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1 + n, 1));
+const nomeMes = k => MESES[Number(k.slice(5, 7)) - 1];
+const maiusc = t => t[0].toUpperCase() + t.slice(1);
+const fugiu = (v, m) => Math.abs(v - m) >= FORA_MIN && (m < 0.005 || Math.abs(v - m) / m >= FORA_PCT);
+const temMovimento = m => m.entrou > 0.005 || m.saiu > 0.005 || m.aportes > 0.005 || m.resgates > 0.005;
+const fimDoMesISO = k => k + "-" + String(ultimoDia(k)).padStart(2, "0");
+
+// Categorias (Dinheiro ou Casa) contra a média das mesmas categorias nos meses de base.
+// Categoria que não apareceu num mês de base conta zero naquele mês.
+function categoriasContraNormal(atual, bases){
+  const nomes = new Set([...Object.keys(atual), ...bases.flatMap(b => Object.keys(b))]);
+  return [...nomes].map(c => {
+    const v = atual[c] || 0, m = bases.length ? soma(bases, b => b[c] || 0) / bases.length : 0;
+    return { c, v, m, dif: v - m, fora: bases.length > 0 && fugiu(v, m) };
+  }).filter(x => x.v > 0.005 || x.m > 0.005).sort((a, b) => b.v - a.v || b.m - a.m);
+}
+const casaPorCategoria = k => {
+  const s = {};
+  livro.casa.lancamentos.filter(doK(k)).forEach(l => s[l.categoria] = (s[l.categoria] || 0) + (Number(l.valor) || 0));
+  return s;
+};
+
+function fechamento(k){
+  const pags = pagamentosClinica();
+  const din = mesDinheiro(k, pags);
+  const base = [];
+  for (let i = 1; i <= 12 && base.length < NORMAL_MESES; i++){
+    const m = mesDinheiro(somaMes(k, -i), pags); if (temMovimento(m)) base.push(m);
+  }
+  const media = f => base.length ? soma(base, f) / base.length : null;
+  const normal = { entrou:media(m => m.entrou), saiu:media(m => m.saiu), sobra:media(m => m.sobra), n:base.length };
+  const ant = mesDinheiro(somaMes(k, -1), pags);
+  const cats = categoriasContraNormal(Object.fromEntries(porCategoria(k)), base.map(m => Object.fromEntries(porCategoria(m.k))));
+
+  // reserva no último dia do mês, quando o saldo conferido é de antes disso
+  const r = livro.dono.reserva, fim = fimDoMesISO(k);
+  let reservaFim = null;
+  if (r.dataBase && r.dataBase <= fim) {
+    const mov = livro.dono.lancamentos.filter(l => (l.data || "") >= r.dataBase && (l.data || "") <= fim);
+    reservaFim = (Number(r.saldoBase) || 0) + soma(mov.filter(l => l.tipo === "Aporte"), l => l.valor) - soma(mov.filter(l => l.tipo === "Resgate"), l => l.valor);
+  }
+
+  // fixos que mudaram de valor, começaram ou pararam contra o mês anterior
+  const kAnt = somaMes(k, -1);
+  const fixos = livro.dono.gastosFixos.map(g => ({ g, v:valorFixo(g, k), a:valorFixo(g, kAnt) }))
+    .filter(x => (x.v > 0.005) !== (x.a > 0.005) || (x.v > 0.005 && Math.abs(x.v - x.a) >= Math.max(10, x.a * 0.05)))
+    .sort((x, y) => Math.abs(y.v - y.a) - Math.abs(x.v - x.a));
+
+  const eu = livro.casa.pessoas[0];
+  const maiores = livro.dono.lancamentos.filter(doK(k)).filter(l => l.tipo === "Despesa" && (!l._financeiro || l.situacao === "Pago")).map(l => ({ l, onde:"Pessoal" }))
+    .concat(livro.casa.lancamentos.filter(doK(k)).filter(l => l.quem === eu).map(l => ({ l, onde:"Casa" })))
+    .sort((a, b) => (Number(b.l.valor) || 0) - (Number(a.l.valor) || 0)).slice(0, 5);
+
+  const lim = limites(), gastoCat = Object.fromEntries(porCategoria(k));
+  const limites_ = Object.keys(lim).filter(c => Number(lim[c]) > 0 && (gastoCat[c] || 0) > Number(lim[c]) + 0.005)
+    .map(c => ({ c, teto:Number(lim[c]), foi:gastoCat[c] }));
+
+  const casa = contasCasa(k), mc = mediaCasa(k);
+  const casaCats = categoriasContraNormal(casaPorCategoria(k), mc.chaves.map(casaPorCategoria));
+  const compras = livro.casa.lancamentos.filter(doK(k)).length;
+
+  return { k, din, normal, ant, cats, reservaFim, fixos, maiores, limites:limites_, casa, mc, casaCats, compras };
+}
+
+// A lista do alto: o que fugiu do normal, primeiro o que pede atenção, depois as boas notícias.
+function alertasFechamento(F){
+  const a = [], { din, normal } = F;
+  const n = normal.n;
+  if (n && fugiu(din.saiu, normal.saiu)) a.push(din.saiu > normal.saiu
+    ? ["warn", `Gastou ${dinheiro(din.saiu - normal.saiu)} a mais que o normal: ${dinheiro(din.saiu)} contra ${dinheiro(normal.saiu)} por mês.`]
+    : ["pos", `Gastou ${dinheiro(normal.saiu - din.saiu)} a menos que o normal: ${dinheiro(din.saiu)} contra ${dinheiro(normal.saiu)} por mês.`]);
+  if (n && fugiu(din.entrou, normal.entrou)) a.push(din.entrou < normal.entrou
+    ? ["warn", `Recebeu ${dinheiro(normal.entrou - din.entrou)} a menos que o normal: ${dinheiro(din.entrou)} contra ${dinheiro(normal.entrou)} por mês.`]
+    : ["pos", `Recebeu ${dinheiro(din.entrou - normal.entrou)} a mais que o normal: ${dinheiro(din.entrou)} contra ${dinheiro(normal.entrou)} por mês.`]);
+  if (din.resgates > 0.005) a.push(["warn", `Tirou ${dinheiro(din.resgates)} da reserva de emergência.`]);
+  F.limites.forEach(x => a.push(["warn", `${semPonto(nomeCat(x.c))} passou o limite em ${dinheiro(x.foi - x.teto)} (${dinheiro(x.foi)} de ${dinheiro(x.teto)}).`]));
+  const daCasa = x => x.c === "Moradia (casa)";   // a parte dele na casa já aparece nos avisos da Casa
+  F.cats.filter(x => x.fora && x.dif > 0 && !daCasa(x) && !F.limites.some(l => l.c === x.c)).forEach(x => a.push(["warn", x.m < 0.005
+    ? `${semPonto(nomeCat(x.c))}: ${dinheiro(x.v)}, sem gasto nos meses anteriores.`
+    : `${semPonto(nomeCat(x.c))}: ${dinheiro(x.v)}, ${dinheiro(x.dif)} acima do normal de ${dinheiro(x.m)}.`]));
+  F.fixos.filter(x => x.v > x.a + 0.005 && x.a > 0.005).forEach(x => a.push(["warn", `O fixo ${semPonto(x.g.descricao)} subiu de ${dinheiro(x.a)} para ${dinheiro(x.v)}.`]));
+  if (F.mc.media !== null && fugiu(F.casa.total, F.mc.media)) a.push(F.casa.total > F.mc.media
+    ? ["warn", `A casa gastou ${dinheiro(F.casa.total - F.mc.media)} acima da média: ${dinheiro(F.casa.total)} contra ${dinheiro(F.mc.media)}.`]
+    : ["pos", `A casa gastou ${dinheiro(F.mc.media - F.casa.total)} abaixo da média: ${dinheiro(F.casa.total)} contra ${dinheiro(F.mc.media)}.`]);
+  F.casaCats.filter(x => x.fora && x.dif > 0).forEach(x => a.push(["warn", x.m < 0.005
+    ? `Na casa, ${semPonto(nomeCat(x.c)).toLowerCase()}: ${dinheiro(x.v)}, sem compra nos meses anteriores.`
+    : `Na casa, ${semPonto(nomeCat(x.c)).toLowerCase()}: ${dinheiro(x.v)}, ${dinheiro(x.dif)} acima do normal de ${dinheiro(x.m)}.`]));
+  F.cats.filter(x => x.fora && x.dif < 0 && !daCasa(x) && x.m >= FORA_MIN).forEach(x => a.push(["pos", `${semPonto(nomeCat(x.c))}: ${dinheiro(x.v)}, ${dinheiro(-x.dif)} abaixo do normal de ${dinheiro(x.m)}.`]));
+  if (din.aportes > 0.005) a.push(["pos", `Guardou ${dinheiro(din.aportes)} na reserva de emergência.`]);
+  return a.sort((x, y) => (x[0] === "warn" ? 0 : 1) - (y[0] === "warn" ? 0 : 1));
+}
+
+// junta partes numa frase: "a", "a e b", "a, b e c"
+const frase = l => { l = l.filter(Boolean); return l.length < 2 ? (l[0] || "") : l.slice(0, -1).join(", ") + " e " + l[l.length - 1]; };
+function vistaFechamento(){
+  const k = chaveMes(ref), kHoje = chaveMes(new Date()), kAnt = somaMes(kHoje, -1);
+  const Nome = maiusc(nomeMes(k));
+  if (k >= kHoje) return `<section class="painel"><p class="vazio" style="padding-top:0">${k === kHoje ? `${Nome} ainda não acabou.` : `${Nome} ainda não começou.`} O fechamento resume um mês que já terminou.</p>
+    <button type="button" class="b" data-fech="${kAnt}">Ver o fechamento de ${nomeMes(kAnt)}</button></section>`;
+  const F = fechamento(k), { din, normal } = F;
+  if (!temMovimento(din) && !F.compras) return `<section class="painel"><p class="vazio">Nada lançado em ${nomeMes(k)} de ${k.slice(0, 4)}.</p></section>`;
+
+  const seta = cima => `<span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${cima ? '<path d="M12 19V5M5 12l7-7 7 7"/>' : '<path d="M12 5v14M5 12l7 7 7-7"/>'}</svg></span>`;
+  const pos = din.sobra >= 0;
+  const compNormal = normal.sobra === null ? "" : Math.abs(din.sobra - normal.sobra) < 0.005 ? " Igual ao normal."
+    : ` ${din.sobra > normal.sobra ? "Melhor" : "Pior"} que o normal, que é ${normal.sobra < 0 ? "faltar " + dinheiro(-normal.sobra) : "sobrar " + dinheiro(normal.sobra)} por mês.`;
+  const ver = `<div class="veredito ${pos ? "pos" : "neg"}"><div class="topo-v">${seta(pos)}<b>${pos ? "Fechou positivo" : "Fechou negativo"}</b></div>
+    <p>${Nome} terminou com ${pos ? dinheiro(din.sobra) + " de sobra" : "falta de " + dinheiro(-din.sobra)}.${compNormal}</p></div>`;
+
+  const contra = (v, m, maisBom) => {
+    if (m === null) return `<small>sem meses anteriores para comparar</small>`;
+    const d = v - m; if (Math.abs(d) < 0.005) return `<small>igual ao normal</small>`;
+    const bom = maisBom ? d > 0 : d < 0;
+    return `<small class="${fugiu(v, m) ? (bom ? "pos" : "warn") : ""}">${dinheiro(Math.abs(d))} ${d > 0 ? "acima" : "abaixo"} do normal (${sinalDin(m)})</small>`;
+  };
+  const vsAnt = (v, a) => a > 0.005 ? `<small>${nomeMes(F.ant.k)}: ${dinheiro(a)}</small>` : "";
+  const outros = din.entrou - din.pacientes;
+  const nums = `<div class="nums"><div class="linha-k">
+      <div class="k"><span>Recebi</span><b class="pos">${dinheiro(din.entrou)}</b>${contra(din.entrou, normal.entrou, true)}${vsAnt(din.entrou, F.ant.entrou)}${din.pacientes > 0.005 ? `<small>${dinheiro(din.pacientes)} de pacientes${outros > 0.005 ? `, ${dinheiro(outros)} de outras entradas` : ""}</small>` : ""}</div>
+      <div class="k"><span>Gastei</span><b>${dinheiro(din.saiu)}</b>${contra(din.saiu, normal.saiu, false)}${vsAnt(din.saiu, F.ant.saiu)}${din.entrou > 0.005 ? `<small>${Math.round(din.saiu / din.entrou * 100)}% do que recebi</small>` : ""}</div>
+      <div class="k destaque"><span>${din.sobra < -0.005 ? "Faltou" : "Sobrou"}</span><b class="${din.sobra < -0.005 ? "neg" : "pos"}">${dinheiro(Math.abs(din.sobra))}</b>${contra(din.sobra, normal.sobra, true)}${din.aportes > 0.005 || din.resgates > 0.005 ? `<small>ajustado pela reserva</small>` : ""}</div>
+    </div></div>`;
+
+  const alertas = alertasFechamento(F);
+  const listaAlertas = alertas.length
+    ? `<ul class="fe-al">${alertas.map(([t, txt]) => `<li class="${t}"><i></i><span>${escH(txt)}</span></li>`).join("")}</ul>`
+    : `<p class="vazio" style="padding:0">Nada fugiu do normal em ${nomeMes(k)}.</p>`;
+
+  const linhaCat = x => `<li class="${x.fora ? (x.dif > 0 ? "warn" : "pos") : ""}"><span class="n">${escH(comPonto(nomeCat(x.c)))}</span><b>${dinheiro(x.v)}</b>
+    <small>${x.m < 0.005 ? "novo" : Math.abs(x.dif) < 0.5 ? "no normal" : `${x.dif > 0 ? "+" : "−"} ${dinheiro(Math.abs(x.dif))}`}</small></li>`;
+  const tabelaCats = (cats, vazio) => cats.length ? `<ul class="fe-cat">${cats.map(linhaCat).join("")}</ul>` : `<p class="vazio">${vazio}</p>`;
+
+  const [p1, p2] = livro.casa.pessoas;
+  const casa = F.compras ? `<div class="stats duas-col" style="margin-bottom:12px">
+      <div class="stat"><span>Total da casa</span><b>${dinheiro(F.casa.total)}</b><small>${F.compras} compra${F.compras === 1 ? "" : "s"}</small></div>
+      <div class="stat"><span>Média</span><b>${F.mc.media === null ? "—" : dinheiro(F.mc.media)}</b><small>${F.mc.media === null ? "sem mês fechado antes" : F.mc.meses.length === 1 ? "1 mês fechado" : `últimos ${F.mc.meses.length} meses fechados`}</small></div>
+      <div class="stat"><span>${escH(primeiro(p1))} pagou</span><b>${dinheiro(F.casa.pagou[p1])}</b></div>
+      <div class="stat"><span>${escH(primeiro(p2))} pagou</span><b>${dinheiro(F.casa.pagou[p2])}</b></div>
+    </div><p class="nota" style="margin:0 0 10px">Balança: ${escH(balanca(F.casa, p1, p2))}.</p>
+    ${tabelaCats(F.casaCats, "")}` : `<p class="vazio">Nenhuma compra da casa em ${nomeMes(k)}.</p>`;
+
+  const maiores = F.maiores.length ? `<ul class="fe-cat">${F.maiores.map(({ l, onde }) => `<li><span class="n">${escH(comPonto(l.descricao && l.descricao !== "-" ? l.descricao : nomeCat(l.categoria)))}<small>${dataCurta(l.data)} · ${onde} · ${escH(semPonto(nomeCat(l.categoria)))}</small></span><b>${dinheiro(l.valor)}</b></li>`).join("")}</ul>`
+    : `<p class="vazio">Nenhum gasto lançado.</p>`;
+
+  const fixos = F.fixos.length ? `<section class="painel"><h2>Gastos fixos que mudaram<span class="dir">contra ${nomeMes(F.ant.k)}</span></h2><ul class="fe-cat">${F.fixos.map(x =>
+    `<li class="${x.v > x.a ? "warn" : "pos"}"><span class="n">${escH(comPonto(x.g.descricao))}</span><b>${x.v > 0.005 ? dinheiro(x.v) : "—"}</b>
+      <small>${x.a < 0.005 ? "começou" : x.v < 0.005 ? `parou (era ${dinheiro(x.a)})` : `era ${dinheiro(x.a)}`}</small></li>`).join("")}</ul></section>` : "";
+
+  const reserva = din.aportes > 0.005 || din.resgates > 0.005 || F.reservaFim !== null
+    ? `<p class="nota" style="margin-top:10px">Reserva de emergência: ${frase([din.aportes > 0.005 ? `guardou ${dinheiro(din.aportes)}` : "",
+        din.resgates > 0.005 ? `tirou ${dinheiro(din.resgates)}` : "", F.reservaFim !== null ? `terminou o mês com ${dinheiro(F.reservaFim)}` : ""])}.</p>` : "";
+
+  return `<section class="painel"><h2>Como ${nomeMes(k)} fechou<span class="dir">${normal.n ? `normal: média de ${normal.n === 1 ? "1 mês" : normal.n + " meses"} antes` : ""}</span></h2>
+    <div class="situ">${ver}${nums}</div>${reserva}</section>
+  <section class="painel bloco"><h2>O que fugiu do normal<span class="dir">${alertas.filter(x => x[0] === "warn").length || "nada"} para olhar</span></h2>${listaAlertas}</section>
+  <div class="duas igual">
+    <section class="painel"><h2>Gastos por categoria<span class="dir">contra o normal</span></h2>${tabelaCats(F.cats, "Nada saiu neste mês.")}</section>
+    <section class="painel"><h2>Casa<span class="dir">contra a média</span></h2>${casa}</section>
+  </div>
+  <div class="duas igual">
+    <section class="painel"><h2>Maiores gastos<span class="dir">seus, com a casa</span></h2>${maiores}</section>
+    ${fixos || `<section class="painel"><h2>Gastos fixos</h2><p class="vazio">Nenhum fixo mudou de valor contra ${nomeMes(F.ant.k)}.</p></section>`}
+  </div>
+  <p class="nota" style="margin-top:14px">O normal é a média dos meses anteriores com movimento, até ${NORMAL_MESES}. Fugiu do normal quando a diferença passa de ${Math.round(FORA_PCT * 100)}% e de ${dinheiro(FORA_MIN)}. Na casa, a média é a mesma do card da Casa, só com meses completos. As contas são as mesmas da Situação do mês e do Mês a mês. Esta tela só lê os dados, não muda nada.</p>`;
+}
+
+// Nos primeiros dias do mês, a aba Tudo lembra que o mês anterior fechou.
+function avisoFechamento(){
+  const agora = new Date(), kHoje = chaveMes(agora);
+  if (PERFIL === "ana" || chaveMes(ref) !== kHoje || agora.getDate() > 10) return "";
+  const k = somaMes(kHoje, -1);
+  if (!temMovimento(mesDinheiro(k))) return "";
+  return `<section class="painel bloco aviso-fx fe-aviso"><p><b>${maiusc(nomeMes(k))} fechou.</b> Veja o resumo do mês e o que fugiu do normal.</p>
+    <button type="button" class="b s" data-fech="${k}">Ver o fechamento</button></section>`;
+}
+
+// "O que precisa de você" (06/10/2026, ideia do primeiro desenho do app): no alto da aba Tudo, o
+// que pede ação hoje, de todas as áreas, num lugar só. Cada aviso vem da conta que a tela dele já faz
+// (a Clínica responde pela dela) e o toque leva até lá. Só lê: nada aqui grava nem muda número.
+const NIVEL_PRECISA = { urgente:0, atencao:1, info:2 };
+function avisosPrecisa(){
+  const A = [], km = chaveMes(ref), agora = new Date(), hoje = agora.getDate();
+  // Clínica: atrasos e vencimentos, sessões sem marcar e prontuário por escrever
+  const w = janelaClinica();
+  if (w && typeof w.avisosDaClinica === "function") {
+    try { w.avisosDaClinica().forEach(a => A.push({ ...a, area:"Clínica", ir:{ clinica:a.abrir } })); } catch(e){}
+  }
+  // Dinheiro: fixos do mês ainda não copiados, fixos que vencem nos próximos dias, limites, pendências
+  const copiar = fixosParaCopiar(km).length;
+  if (copiar) A.push({ nivel:"atencao", area:"Dinheiro", titulo:`Gastos fixos de ${MESES[ref.getMonth()]} ainda não copiados`,
+    detalhe:`${copiar} ${copiar === 1 ? "cobrou" : "cobraram"} no mês passado. Sem eles, "Fecha o mês em" fica sem essas contas.`, ir:{ din:"fixos" } });
+  const vencem = livro.dono.gastosFixos.map(g => ({ g, dia:diaFixo(g, km), v:valorFixo(g, km) }))
+    .filter(x => x.v > 0 && x.dia >= hoje && x.dia <= hoje + 3).sort((a, b) => a.dia - b.dia);
+  vencem.forEach(x => A.push({ nivel:"info", area:"Dinheiro", ordem:x.dia - hoje,
+    titulo:`${semPonto(x.g.descricao || nomeCat(x.g.categoria))}: ${x.dia === hoje ? "sai hoje" : x.dia === hoje + 1 ? "sai amanhã" : `sai em ${x.dia - hoje} dias`}`,
+    detalhe:`${dinheiro(x.v)}, gasto fixo do dia ${x.dia}.`, ir:{ din:"fixos" } }));
+  const lim = livro.dono.limites || {}, gasto = Object.fromEntries(porCategoria());
+  Object.keys(lim).filter(c => Number(lim[c]) > 0).forEach(c => {
+    const teto = Number(lim[c]), foi = gasto[c] || 0;
+    if (foi > teto * 1.0005) A.push({ nivel:"atencao", area:"Dinheiro", titulo:`${semPonto(nomeCat(c))} passou do limite`,
+      detalhe:`${dinheiro(foi)} de ${dinheiro(teto)}: ${dinheiro(foi - teto)} acima.`, ir:{ din:"mes" } });
+    else if (foi >= teto * PERTO_DO_LIMITE) A.push({ nivel:"info", area:"Dinheiro", titulo:`${semPonto(nomeCat(c))} perto do limite`,
+      detalhe:`Sobram ${dinheiro(teto - foi)} de ${dinheiro(teto)}.`, ir:{ din:"mes" } });
+  });
+  const abertas = (livro.dono.pendencias || []).filter(p => !pendQuitada(p));
+  if (abertas.length) {
+    const rec = soma(abertas.filter(p => p.tipo === "receber"), restantePend), pag = soma(abertas.filter(p => p.tipo === "pagar"), restantePend);
+    A.push({ nivel:"info", area:"Dinheiro", titulo:`${abertas.length} ${abertas.length === 1 ? "pendência em aberto" : "pendências em aberto"}`,
+      detalhe:[rec > 0.005 ? `${dinheiro(rec)} a receber` : "", pag > 0.005 ? `${dinheiro(pag)} a pagar` : ""].filter(Boolean).join(" e ") + ".", ir:{ din:"pend" } });
+  }
+  // Cripto: os avisos fortes da Carteira (menos o humor do mercado, que não pede nada dele), se ela está aberta; senão, a pool fora da faixa da última leitura
+  let cripto = null;
+  try { const f = window.parent.document.getElementById("q-carteira"), cw = f && f.contentWindow;
+    if (cw && typeof cw.calcularAlertas === "function") cripto = cw.calcularAlertas().filter(a => a.nivel !== "info" && !String(a.id).startsWith("medo")); } catch(e){}
+  if (cripto) cripto.forEach(a => A.push({ nivel:a.nivel, area:"Cripto", titulo:a.titulo, detalhe:a.detalhe, ir:{ cripto:true } }));
+  else {
+    const vivo = lerLocal("cripto-v1-vivo"), fora = vivo && Array.isArray(vivo.posicoes) ? vivo.posicoes.filter(x => x && !x.teste && !x.dentro).length : 0;
+    if (fora) A.push({ nivel:"urgente", area:"Cripto", titulo:`${fora === 1 ? "1 pool fora" : fora + " pools fora"} da faixa`,
+      detalhe:`Parada${fora === 1 ? "" : "s"}, sem render taxas. Leitura de ${new Date(vivo.t).toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" })}.`, ir:{ cripto:true } });
+  }
+  return A.map((a, i) => ({ ...a, i })).sort((a, b) => NIVEL_PRECISA[a.nivel] - NIVEL_PRECISA[b.nivel] || (a.ordem || 0) - (b.ordem || 0) || a.i - b.i);
+}
+let avisosNaTela = [];
+// no celular a lista mostra três e guarda o resto em "Mais", para a Situação do mês continuar perto do alto
+const precisaVisiveis = () => { try { return matchMedia("(max-width:700px)").matches ? 3 : 5; } catch(e){ return 5; } };
+function painelPrecisa(){
+  if (PERFIL === "ana" || chaveMes(ref) !== chaveMes(new Date())) { avisosNaTela = []; return ""; }
+  const A = avisosNaTela = avisosPrecisa();
+  const clinicaAbriu = !!janelaClinica();
+  const semNada = !livro.dono.lancamentos.length && !livro.dono.gastosFixos.length && !livro.casa.lancamentos.length;
+  if (!A.length && semNada && (!clinicaAbriu || !Nuvem.conectado())) return "";
+  const espera = clinicaAbriu ? "" : `<p class="nota pv-nota">Os avisos da Clínica aparecem quando ela terminar de abrir.</p>`;
+  if (!A.length) return `<section class="painel pv pv-ok"><p><span class="pv-ok-i" aria-hidden="true">✓</span><b>Nada precisa de você agora.</b></p>${espera}</section>`;
+  const fortes = A.filter(a => a.nivel !== "info").length;
+  const item = (a, i) => `<li class="${a.nivel}"><button type="button" class="pv-i" data-precisa="${i}">
+      <i aria-hidden="true"></i><span class="pv-t"><b>${escH(a.titulo)}</b><small><em>${a.area}</em> · ${escH(a.detalhe)}</small></span>
+      <svg class="pv-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>`;
+  const n = precisaVisiveis(), vis = A.slice(0, n), resto = A.slice(n);
+  return `<section class="painel pv" aria-label="O que precisa de você"><h2>O que precisa de você<span class="dir">${fortes ? `<span class="pv-n">${fortes}</span> ${fortes === 1 ? "pede ação" : "pedem ação"}` : `${A.length} ${A.length === 1 ? "lembrete" : "lembretes"}`}</span></h2>
+    <ul class="pv-l">${vis.map(item).join("")}</ul>
+    ${resto.length ? `<details class="pv-mais"><summary>Mais ${resto.length} ${resto.length === 1 ? "aviso" : "avisos"}</summary><ul class="pv-l">${resto.map((a, j) => item(a, j + n)).join("")}</ul></details>` : ""}${espera}</section>`;
+}
+// leva ao lugar do aviso: a casca troca a tela (assim o título e as abas acompanham)
+function irPrecisa(a){
+  if (!a || !a.ir) return;
+  const casca = (() => { try { return window.top !== window.self && typeof window.parent.mostrar === "function" ? window.parent : null; } catch(e){ return null; } })();
+  if (a.ir.din) {
+    vistaDin = a.ir.din;
+    if (casca) casca.mostrar("carteira");
+    else { aba = "carteira"; try { location.hash = aba; } catch(e){} desenhar(); }
+    window.scrollTo(0, 0);
+    return;
+  }
+  if (!casca) return;   // fora da casca não há Clínica nem Cripto ao lado
+  if (a.ir.cripto) { casca.mostrar("cripto"); return; }
+  if (a.ir.clinica) {
+    casca.mostrar("clinica");
+    const w = janelaClinica();
+    if (w && typeof w.abrirDoTudo === "function") w.abrirDoTudo(a.ir.clinica);
+  }
+}
+
+// ---------- importar o extrato do Nubank (19/10/2026) ----------
+// Aprovado em 01/10/2026, desenho de 15/10/2026: ele escolhe o OFX (fatura ou conta), o app compara
+// com o que já foi lançado à mão e mostra três grupos: novos (para conferir e lançar), já lançados e
+// ignorados (pagamento de fatura, gasto fixo, Pix de paciente, Terceiro). Nada entra sem ele apertar
+// "Lançar". As escolhas dele viram regra para a próxima vez (livro.dono.regras) e cada linha
+// lançada fica marcada (livro.dono.importados), para o mesmo arquivo não entrar duas vezes.
+// Regras de leitura e classificação: extrato.js. Só no app dele (a Pessoa 2 tem três bancos).
+let imp = null;
+const impRegras = () => (livro.dono.regras = livro.dono.regras || {});
+const impFeitos = () => (livro.dono.importados = livro.dono.importados || {});
+function impFixosDoMes(km){
+  return livro.dono.gastosFixos.map(g => ({ descricao:g.descricao, categoria:g.categoria, dia:diaFixo(g, km), valor:valorFixo(g, km) })).filter(g => g.valor > 0);
+}
+function impClinica(){
+  const w = janelaClinica();
+  const pags = w ? w.dados.pagamentos : ((lerLocal("controle-unico-clinica-cache") || {}).pagamentos || []);
+  return pags.map(g => ({ data:g.data, valor:Number(g.valor) || 0 }));
+}
+async function impLer(arquivo){
+  const buf = await arquivo.arrayBuffer();
+  let texto = new TextDecoder("utf-8").decode(buf);
+  // OFX antigo declara CHARSET:1252: aí os acentos vêm em Windows-1252
+  if (/CHARSET:\s*1252/i.test(texto.slice(0, 400)) || texto.includes("�")) texto = new TextDecoder("windows-1252").decode(buf);
+  const ex = Extrato.ler(texto);
+  const eu = livro.casa.pessoas[0];
+  const r = Extrato.classificar(ex, {
+    din: livro.dono.lancamentos, casa: livro.casa.lancamentos.filter(l => !eu || l.quem === eu),
+    fixosDoMes: impFixosDoMes, clinica: impClinica(), importados: impFeitos(), regras: impRegras() });
+  const linhas = r.novos.map(x => Object.assign(x, { grupo:"novo", marcado:true }))
+    .concat(r.ignorados.map(x => Object.assign(x, { grupo:"ignorado", marcado:false })));
+  imp = { nome:arquivo.name, r, linhas, erro:"" };
+}
+function impOpcoesCategoria(x){
+  if (x.tipo === "Aporte" || x.tipo === "Resgate") return `<option>Reserva</option>`;
+  if (x.tipo === "Receita") return `<option>Outras entradas</option>`;
+  const grupos = x.onde === "casa" ? gruposCasa() : gruposDinheiro();
+  return `<option value="">Escolha</option>` + grupos.map(([g, cs]) => `<optgroup label="${escH(g)}">${cs.map(c =>
+    `<option${c === x.categoria ? " selected" : ""}>${escH(c)}</option>`).join("")}</optgroup>`).join("");
+}
+function impLinha(x, i){
+  const despesa = x.tipo === "Despesa";
+  return `<tr class="${x.marcado ? "" : "imp-off"}${x.falta ? " imp-falta" : ""}">
+    <td><input type="checkbox" data-imp-marca="${i}" ${x.marcado ? "checked" : ""} aria-label="Lançar ${escH(x.descricao)}"></td>
+    <td data-rot="Dia">${dia(x.data)}</td>
+    <td data-rot="Descrição"><input type="text" class="imp-desc" data-imp-desc="${i}" value="${escH(x.descricao)}" aria-label="Descrição">${x.nota ? `<small class="nota">${escH(x.nota)}</small>` : ""}${x.motivo ? `<small class="nota">${escH(x.motivo)}</small>` : ""}</td>
+    <td data-rot="Onde">${despesa ? `<select data-imp-onde="${i}" aria-label="Pessoal ou Casa"><option value="pessoal"${x.onde !== "casa" ? " selected" : ""}>Pessoal</option><option value="casa"${x.onde === "casa" ? " selected" : ""}>Casa</option></select>` : escH(x.tipo)}</td>
+    <td data-rot="Categoria"><select data-imp-cat="${i}" aria-label="Categoria">${impOpcoesCategoria(x)}</select>${x.origem ? `<small class="nota">${x.origem === "regra" ? "pela sua regra" : x.origem === "histórico" ? "como da última vez" : "sugestão"}</small>` : ""}</td>
+    <td class="num" data-rot="Valor">${dinheiro(x.valor)}</td></tr>`;
+}
+function painelImportar(){
+  if (PERFIL === "ana") return "";
+  if (!imp) return `<div class="imp-barra"><button type="button" class="b" id="impAbrir">Importar extrato do Nubank</button>
+    <input type="file" id="impArquivo" accept=".ofx,.OFX" hidden><span class="nota">Fatura ou conta, no arquivo OFX que chega por e-mail.</span></div>`;
+  if (imp.feito) return `<div class="imp-barra imp-ok" role="status">${escH(imp.feito.texto)}
+    <button type="button" class="b" id="impDesfazer">Desfazer</button><button type="button" class="b" id="impFechar">Fechar</button></div>`;
+  const r = imp.r, novos = imp.linhas.filter(x => x.grupo === "novo"), ign = imp.linhas.filter(x => x.grupo === "ignorado");
+  const marcados = imp.linhas.filter(x => x.marcado).length;
+  const tabela = l => `<table class="t imp-t"><thead><tr><th></th><th>Dia</th><th>Descrição</th><th>Onde</th><th>Categoria</th><th class="num">Valor</th></tr></thead>
+    <tbody>${l.map(x => impLinha(x, imp.linhas.indexOf(x))).join("")}</tbody></table>`;
+  return `<div class="imp" role="region" aria-label="Importar extrato">
+    <h3>${r.fonte === "fatura" ? "Fatura do cartão" : "Conta"}${r.inicio ? `, de ${dia(r.inicio)} a ${dia(r.fim)}` : ""}</h3>
+    <p class="nota">${novos.length} para conferir · ${r.jaLancados.length} já lançados por você · ${ign.length} ignorados${r.repetidos ? ` · ${r.repetidos} já importados antes` : ""}. Confira a categoria de cada linha: nada entra antes de você apertar Lançar.</p>
+    ${novos.length ? tabela(novos) : `<p class="vazio">Nada novo neste arquivo.</p>`}
+    ${r.jaLancados.length ? `<details><summary>Já lançados por você (${r.jaLancados.length})</summary><ul class="imp-lista">${r.jaLancados.map(x =>
+      `<li>${dia(x.data)} · ${escH(x.descricao)} · ${dinheiro(x.valor)} <span class="nota">= "${escH(x.par.descricao || "-")}", ${dia(x.par.data)}${x.par.onde === "casa" ? ", na Casa" : ""}</span></li>`).join("")}</ul></details>` : ""}
+    ${ign.length ? `<details><summary>Ignorados (${ign.length}): marque o que quiser lançar mesmo assim</summary>${tabela(ign)}</details>` : ""}
+    ${imp.erro ? `<p class="erro" role="alert">${escH(imp.erro)}</p>` : ""}
+    <div class="imp-barra"><button type="button" class="b p" id="impLancar"${marcados ? "" : " disabled"}>Lançar ${marcados} ${marcados === 1 ? "linha" : "linhas"}</button>
+      <button type="button" class="b" id="impCancelar">Cancelar</button></div></div>`;
+}
+function impLancar(){
+  const marcadas = imp.linhas.filter(x => x.marcado);
+  const falta = marcadas.filter(x => x.tipo === "Despesa" && !x.categoria);
+  imp.linhas.forEach(x => { x.falta = falta.includes(x); });
+  if (falta.length){ imp.erro = `Falta a categoria em ${falta.length} ${falta.length === 1 ? "linha" : "linhas"} (em vermelho).`; desenhar(); return; }
+  const eu = livro.casa.pessoas[0], feitos = impFeitos(), regras = impRegras(), hoje = hojeISO(), ids = [], hashes = [];
+  let casa = 0, pessoal = 0;
+  marcadas.forEach(x => {
+    const id = novoId(), desc = String(x.descricao || "").trim() || "-";
+    if (x.tipo === "Despesa" && x.onde === "casa"){
+      livro.casa.lancamentos.push({ id, data:x.data, quem:eu, descricao:desc, categoria:x.categoria, valor:x.valor });
+      ids.push(["casa", id]); casa++;
+    } else {
+      const reserva = x.tipo === "Aporte" || x.tipo === "Resgate";
+      livro.dono.lancamentos.push({ id, data:x.data, tipo:x.tipo, descricao:desc,
+        categoria: reserva ? "Reserva" : x.tipo === "Receita" ? "Outras entradas" : x.categoria, forma:x.forma, valor:x.valor });
+      ids.push(["dono", id]); pessoal++;
+    }
+    if (x.tipo === "Despesa" && x.palavra && x.categoria) regras[x.palavra] = { onde:x.onde === "casa" ? "casa" : "pessoal", categoria:x.categoria };
+    feitos[x.hash] = hoje; hashes.push(x.hash);
+  });
+  // o que já estava lançado à mão também fica marcado: o mesmo arquivo não volta a perguntar
+  imp.r.jaLancados.forEach(x => { if (!feitos[x.hash]){ feitos[x.hash] = hoje; hashes.push(x.hash); } });
+  imp = { feito:{ ids, hashes, texto:`Lançadas ${marcadas.length} ${marcadas.length === 1 ? "linha" : "linhas"}: ${pessoal} no Pessoal e ${casa} na Casa.` } };
+  salvar("dono"); if (casa) salvar("casa");
+}
+function impDesfazer(){
+  const f = imp && imp.feito; if (!f) return;
+  const tirar = { dono:new Set(), casa:new Set() };
+  f.ids.forEach(([c, id]) => tirar[c].add(id));
+  livro.dono.lancamentos = livro.dono.lancamentos.filter(l => !tirar.dono.has(l.id));
+  livro.casa.lancamentos = livro.casa.lancamentos.filter(l => !tirar.casa.has(l.id));
+  const feitos = impFeitos(); f.hashes.forEach(h => { delete feitos[h]; });
+  imp = null;
+  salvar("dono"); if (tirar.casa.size) salvar("casa");
+}
+function ligarImportar(){
+  const b = document.getElementById("impAbrir"), a = document.getElementById("impArquivo");
+  if (b && a){
+    b.onclick = () => a.click();
+    a.onchange = async e => {
+      const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+      try { await impLer(f); } catch(err){ imp = null; recado("Não consegui ler o extrato: " + err.message, true); }
+      desenhar();
+    };
+  }
+  const x = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  x("impCancelar", () => { imp = null; desenhar(); });
+  x("impFechar", () => { imp = null; desenhar(); });
+  x("impLancar", impLancar);
+  x("impDesfazer", impDesfazer);
+  if (!imp || !imp.linhas) return;
+  document.querySelectorAll("[data-imp-marca]").forEach(c => c.onchange = () => { imp.linhas[c.dataset.impMarca].marcado = c.checked; desenhar(); });
+  document.querySelectorAll("[data-imp-desc]").forEach(c => c.oninput = () => { imp.linhas[c.dataset.impDesc].descricao = c.value; });
+  document.querySelectorAll("[data-imp-cat]").forEach(c => c.onchange = () => { const l = imp.linhas[c.dataset.impCat]; l.categoria = c.value; l.falta = false; l.origem = ""; });
+  document.querySelectorAll("[data-imp-onde]").forEach(c => c.onchange = () => {
+    const l = imp.linhas[c.dataset.impOnde]; l.onde = c.value;
+    const lista = l.onde === "casa" ? catsCasa() : catsDinheiro();
+    if (!lista.includes(l.categoria)) l.categoria = "";
+    desenhar();
+  });
+}
+
+function telaDinheiro(){
+  if (vistaDin === "fixos") return subabasDinheiro() + barraMes() + vistaFixos();
+  if (vistaDin === "pend") return subabasDinheiro() + painelPendencias();
+  if (vistaDin === "hist") return subabasDinheiro() + vistaHistorico();
+  if (vistaDin === "fech") return subabasDinheiro() + barraMes() + vistaFechamento();
+  const d = contasDinheiro();
+  const doMes = ordenar(livro.dono.lancamentos.filter(noMes), "lanc");
+  const r = livro.dono.reserva;
+
+  const form = formLancamento("pessoal");
+
+  const lista = doMes.length ? `${filtroCategoria(doMes, "lanc")}${ordemCelular("lanc")}<table class="t">${cabecalho("lanc")}
+    <tbody>${filtrar(doMes, "lanc").map(linhaLanc).join("")}</tbody></table>`
+    : `<p class="vazio">Nenhum lançamento em ${MESES[ref.getMonth()]}.</p>`;
+
+  const formReserva = `<details class="novo"><summary>Ajustar a reserva de emergência</summary><form class="linha" id="fReserva">
+    <div><label>Saldo conferido</label><input type="text" name="saldoBase" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00" value="${valorCampo(r.saldoBase)}" required></div>
+    <div><label>Conferido em</label><input type="date" name="dataBase" value="${escH(r.dataBase || "")}"></div>
+    <div><label>Meta</label><input type="text" name="meta" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00" value="${valorCampo(r.meta)}"></div>
+    <div><button class="b p" type="submit">Guardar</button></div>
+  </form></details>`;
+
+  return subabasDinheiro() + barraMes() + painelSeparar() + cardSituacao(d) + `
+  <div class="duas larga">
+    <section class="painel"><h2>Lançamentos<span class="dir">${doMes.length} no mês</span></h2>${form}${painelImportar()}${lista}</section>
+    <div class="coluna">
+      <section class="painel"><h2>Gastos por categoria</h2>${roscaCategorias(d)}</section>
+      ${painelLimites()}
+      ${painelCategorias()}
+      <section class="painel"><h2>Reserva de emergência</h2>
+        <div class="stats duas-col" style="margin-bottom:12px">
+          <div class="stat"><span>Saldo</span><b>${dinheiro(d.reserva)}</b></div>
+          <div class="stat"><span>Meta</span><b>${r.meta ? dinheiro(r.meta) : "—"}</b></div>
+        </div>${formReserva}
+        <p class="nota">${r.dataBase ? `Contam os aportes e resgates lançados a partir de ${dataCurta(r.dataBase)}/${r.dataBase.slice(0, 4)}, inclusive esse dia. Por isso, confira o saldo antes de lançar os movimentos do dia.` : "Todo aporte e todo resgate lançado mexe no saldo. Marque a data em que conferiu o saldo no banco."}</p></section>
+    </div>
+  </div>`;
+}
+
+// O card do alto da Casa, no mesmo desenho do card da aba Tudo (pedido dele, 28/09/2026):
+// quem pagou quanto, o mês contra o anterior e a média, e a caixa dizendo se o mês está acima da média.
+const CASA_MEDIA_DESDE = "2026-08";   // primeiro mês com a casa lançada do começo ao fim
+function totalCasaDoMes(d){
+  const k = chaveMes(d);
+  return soma(livro.casa.lancamentos.filter(l => (l.data || "").slice(0, 7) === k), l => l.valor);
+}
+function mediaCasa(km){
+  const meses = [], chaves = [];
+  for (let m = 1; m <= 12; m++){
+    const d = new Date(Number(km.slice(0, 4)), Number(km.slice(5, 7)) - 1 - m, 1);
+    if (chaveMes(d) < CASA_MEDIA_DESDE) break;
+    const v = totalCasaDoMes(d); if (v > 0.005) { meses.push(v); chaves.push(chaveMes(d)); }
+  }
+  return { meses, chaves, media: meses.length ? soma(meses) / meses.length : null };
+}
+function cardCasa(c){
+  const [p1, p2] = livro.casa.pessoas;
+  const parte = parteCasa();
+  const agora = new Date(), corrente = chaveMes(ref) === chaveMes(agora);
+  const nome = MESES[ref.getMonth()], Nome = nome[0].toUpperCase() + nome.slice(1);
+  const doMes = livro.casa.lancamentos.filter(noMes).length;
+  const antes = totalCasaDoMes(new Date(ref.getFullYear(), ref.getMonth() - 1, 1));
+  // Média dos últimos 12 meses fechados antes do mês aberto, só a partir do primeiro mês lançado inteiro
+  // (decisão dele, 04/10/2026: julho de 2026 tem só parte das compras e puxaria a média para baixo).
+  const { meses, media } = mediaCasa(chaveMes(ref));
+  const dif = c.total - antes;
+  const seta = cima => `<span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${cima ? '<path d="M12 19V5M5 12l7-7 7 7"/>' : '<path d="M12 5v14M5 12l7 7 7-7"/>'}</svg></span>`;
+  const caixa = (cls, cima, titulo, texto) => `<div class="veredito ${cls}"><div class="topo-v">${seta(cima)}<b>${titulo}</b></div><p>${texto}</p></div>`;
+  let v;
+  if (media === null) v = `<div class="veredito"><div class="topo-v"><b>Sem média ainda</b></div><p>A média aparece quando houver um mês fechado com compras, a partir de agosto de 2026.</p></div>`;
+  else if (c.total > media + 0.005) v = caixa("warn", true, corrente ? "Já passou da média" : "Acima da média",
+    `${corrente ? "Até hoje" : Nome} ${corrente ? "a casa gastou" : "gastou"} ${dinheiro(c.total - media)} a mais que a média de ${dinheiro(media)}.`);
+  // gastou exatamente a média: antes dizia "Faltam R$ 0,00 para chegar à média" (06/10/2026)
+  else if (Math.abs(c.total - media) < 0.005) v = caixa("pos", false, corrente ? "Chegou à média" : "Na média",
+    `${corrente ? "Até hoje a casa gastou" : Nome + " gastou"} ${dinheiro(c.total)}, igual à média.`);
+  else v = caixa("pos", false, corrente ? "Dentro da média" : "Abaixo da média",
+    corrente ? `Faltam ${dinheiro(media - c.total)} para chegar à média de ${dinheiro(media)}.`
+             : `${Nome} ficou ${dinheiro(media - c.total)} abaixo da média de ${dinheiro(media)}.`);
+  return `
+  <section class="painel"><h2>Situação da casa<span class="dir">${corrente ? "até hoje, " + dataCurta(hojeISO()) : ""}</span></h2>
+    <div class="situ">${v}<div class="nums">
+      <div class="linha-k">
+        <div class="k"><span>${escH(primeiro(p1))} pagou</span><b>${dinheiro(c.pagou[p1])}</b><small>parte: ${dinheiro(c.total * parte)}</small></div>
+        <div class="k"><span>${escH(primeiro(p2))} pagou</span><b>${dinheiro(c.pagou[p2])}</b><small>parte: ${dinheiro(c.total * (1 - parte))}</small></div>
+        <div class="k destaque"><span>Total no mês</span><b>${dinheiro(c.total)}</b><small>${doMes} compra${doMes === 1 ? "" : "s"}</small></div>
+      </div>
+      <div class="linha-k">
+        <div class="k"><span>Balança</span><b style="font-size:18px;white-space:normal">${escH(balanca(c, p1, p2))}</b><small>quem pagou mais no mês</small></div>
+        <div class="k"><span>Mês passado</span><b>${dinheiro(antes)}</b><small>${antes > 0.005 ? (dif >= 0 ? dinheiro(dif) + " a menos que agora" : dinheiro(-dif) + " a mais que agora") : "sem compras"}</small></div>
+        <div class="k destaque"><span>Média por mês</span>${media === null ? nd("nenhum mês fechado ainda") : `<b>${dinheiro(media)}</b><small>${meses.length === 1 ? "1 mês fechado" : `últimos ${meses.length} meses fechados`}</small>`}</div>
+      </div>
+    </div></div>
+  </section>
+`;
+}
+
+function telaCasa(){
+  const c = contasCasa();
+  const doMes = ordenar(livro.casa.lancamentos.filter(noMes), "casa");
+  const [p1, p2] = livro.casa.pessoas;
+  const cor = q => q === p1 ? "var(--c1)" : "var(--c2)";
+  const parte = parteCasa();
+
+  const porCat = {};
+  doMes.forEach(l => porCat[l.categoria] = (porCat[l.categoria] || 0) + (Number(l.valor) || 0));
+  const cats = Object.entries(porCat).sort((a, b) => b[1] - a[1]);
+  const cabem = cats.length > 8 ? 7 : 8;
+  const itensCat = cats.slice(0, cabem).map(([k, v], i) => [comPonto(k), v, `var(--c${i + 1})`]);
+  if (cats.length > cabem) itensCat.push(["Outros.", soma(cats.slice(cabem), e => e[1]), "var(--c8)", cats.slice(cabem).map(e => semPonto(e[0])).join(", ") + "."]);
+
+
+  const form = formLancamento("casa");
+
+  const quem = q => `<span class="quem"><i style="background:${cor(q)}"></i>${escH(primeiro(q))}</span>`;
+  const lista = doMes.length ? `${filtroCategoria(doMes, "casa")}${ordemCelular("casa")}<table class="t">${cabecalho("casa")}<tbody>
+    ${filtrar(doMes, "casa").map(l => `<tr${podeMexer(l) ? ` class="clic" data-editar="casa:${escH(l.id)}" tabindex="0" title="Editar"` : ` class="so-ver"`}><td class="c-data">${dataCurta(l.data)}</td>
+      <td class="c-desc"><b>${escH(comPonto(semPonto(l.categoria) + (l.descricao && l.descricao !== "-" && semPonto(l.descricao).toLowerCase() !== semPonto(l.categoria).toLowerCase() ? " · " + l.descricao : "")))}</b><span class="so-cel">${quem(l.quem)}</span></td>
+      <td class="c-quem">${quem(l.quem)}</td>
+      <td class="c-val dir">${dinheiro(l.valor)}</td>
+      <td class="c-x">${podeMexer(l) ? `<button class="x" data-apagar="casa:lancamentos:${escH(l.id)}" aria-label="Apagar" title="Apagar">×</button>` : ""}</td></tr>`).join("")}</tbody></table>`
+    : `<p class="vazio">Nenhuma compra em ${MESES[ref.getMonth()]}.</p>`;
+
+  // Dentro do controle da Pessoa 2 a divisão e os nomes só aparecem: quem muda é ele (Dono, 04/10/2026),
+  // porque trocar a ordem dos nomes ou a parte de cada um mexe nas contas dos dois.
+  const ajustes = PERFIL === "ana"
+    ? `<p class="nota" style="margin:0">${escH(primeiro(p1))} responde por ${Math.round(parte * 100)}% da casa e ${escH(primeiro(p2))} por ${100 - Math.round(parte * 100)}%. A divisão e os nomes só se mudam no app de ${escH(primeiro(p1))}.</p>`
+    : `<details class="novo"><summary>Divisão e nomes</summary>
+    <form class="linha" id="fDivisao">
+      <div><label>Parte de ${escH(primeiro(p1))} (em %)</label>
+        <input type="number" name="divisao" min="0" max="100" step="1" value="${Math.round(parte * 100)}"></div>
+      <div><button class="b p" type="submit">Guardar</button></div>
+    </form>
+    <form class="linha" id="fPessoas" style="margin-top:10px">
+      <div><label>Primeira pessoa (a do seu mês)</label><input name="p1" value="${escH(p1)}" required></div>
+      <div><label>Segunda pessoa</label><input name="p2" value="${escH(p2)}" required></div>
+      <div><button class="b p" type="submit">Guardar</button></div>
+    </form><p class="nota">Os nomes ficam só no caderno da casa, no Drive.</p></details>`;
+
+  return barraMes() + painelSeparar() + cardCasa(c) + `
+  <div class="duas larga">
+    <section class="painel"><h2>Compras<span class="dir">${doMes.length} no mês</span></h2>${form}${lista}</section>
+    <div class="coluna">
+      <section class="painel"><h2>Quem pagou</h2>${roscaCasa(c)}</section>
+      <section class="painel"><h2>Por categoria</h2>${rosca(itensCat, "casa no mês", "Compras da casa por categoria")}</section>
+      <section class="painel"><h2>${PERFIL === "ana" ? "Divisão" : "Ajustes"}</h2>${ajustes}</section>
+    </div>
+  </div>`;
+}
+
+// ---------- desenho ----------
+function desenhar(){
+  document.getElementById("abas").innerHTML =
+    ABAS.map(([k, n]) => `<button data-a="${k}" aria-pressed="${k === aba}">${n}</button>`).join("");
+  const t = document.getElementById("tela");
+  // redesenhar não fecha o formulário aberto na mesma tela (a Clínica pode mudar enquanto ele digita)
+  const abertos = [...t.querySelectorAll("details")].map(x => x.open);
+  const chaveTela = aba === "carteira" ? aba + ":" + vistaDin : aba;
+  const mesma = t.dataset.aba === chaveTela;
+  // nem apaga o que ele estava digitando: o Drive ou a Clínica podem mandar redesenhar no meio
+  // de um lançamento (01/10/2026). Formulário que acabou de ser enviado volta limpo.
+  const digitado = {};
+  if (mesma) t.querySelectorAll("form[id]").forEach(f => { if (!f.dataset.limpo) digitado[f.id] = [...f.elements].filter(e => e.name && (e.type !== "radio" || e.checked)).map(e => [e.name, e.value]); });
+  t.innerHTML = aba === "tudo" ? telaTudo() : aba === "carteira" ? telaDinheiro() : telaCasa();
+  t.dataset.aba = chaveTela;
+  if (mesma) t.querySelectorAll("details").forEach((x, i) => { if (abertos[i] && !x.querySelector("form.enviado")) x.open = true; });
+  for (const id in digitado) {
+    const f = document.getElementById(id); if (!f) continue;
+    digitado[id].forEach(([n, v]) => { const e = f.elements[n];
+      if (e && (e.tagName !== "SELECT" || [...e.options].some(o => o.value === v))) e.value = v; });
+  }
+  ligar();
+  // no celular as subabas podem passar da largura: a aberta fica sempre à vista
+  const sub = t.querySelector(".subabas"), on = sub && sub.querySelector('[aria-pressed="true"]');
+  if (on && sub.scrollWidth > sub.clientWidth) sub.scrollLeft = Math.max(0, on.offsetLeft + on.offsetWidth - sub.clientWidth + 8);
+}
+
+function ligar(){
+  document.querySelectorAll("[data-mes]").forEach(b => b.onclick = () => {
+    ref.setMonth(ref.getMonth() + Number(b.dataset.mes)); desenhar();
+  });
+  // passar o mouse na legenda acende a fatia correspondente da rosca
+  document.querySelectorAll(".rosca .leg li").forEach(li => {
+    const r = li.closest(".rosca"), f = r.querySelector(`.fatia[data-i="${li.dataset.i}"]`);
+    li.onmouseenter = () => { r.classList.add("foco"); if (f) f.classList.add("on"); };
+    li.onmouseleave = () => { r.classList.remove("foco"); if (f) f.classList.remove("on"); };
+  });
+  { const b = document.getElementById("separarAgora"); if (b) b.onclick = () => { separarAgora(); }; }
+  ligarImportar();
+  { const b = document.getElementById("desfazerSeparar"); if (b) b.onclick = desfazerSeparar; }
+  document.querySelectorAll("[data-apagar]").forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    if (!confirm("Apagar esta linha?")) return;
+    const [cad, lista, id] = b.dataset.apagar.split(":");
+    if (cad === "casa" && !podeMexer(livro.casa[lista].find(x => x.id === id))) return;
+    livro[cad][lista] = livro[cad][lista].filter(x => x.id !== id); salvar(cad);
+  });
+  // × do gasto fixo: tira o fixo deste mês em diante; os meses que já passaram continuam com o valor que tinham.
+  // Antes apagava o fixo de todos os meses e o mês passado mudava de número, sem volta (06/10/2026).
+  document.querySelectorAll("[data-apagar-fixo]").forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const g = livro.dono.gastosFixos.find(x => x.id === b.dataset.apagarFixo); if (!g) return;
+    const km = chaveMes(ref), nome = MESES[ref.getMonth()];
+    const antes = g.valores ? Object.keys(g.valores).filter(k => k < km && Number(g.valores[k]) > 0) : [];
+    if (antes.length) {
+      if (!confirm(`Tirar ${comPonto(g.descricao)} de ${nome} em diante? Os meses anteriores continuam com o valor que tinham.`)) return;
+      // zero neste mês (e não vazio) para o mês não oferecer "copiar do mês anterior" de volta
+      Object.keys(g.valores).forEach(k => { if (k > km) delete g.valores[k]; }); g.valores[km] = 0;
+    } else {
+      if (!confirm(`Apagar ${comPonto(g.descricao)}?${g.valores ? "" : " Ele sai de todos os meses, inclusive dos que já passaram."}`)) return;
+      livro.dono.gastosFixos = livro.dono.gastosFixos.filter(x => x.id !== g.id);
+    }
+    salvar("dono");
+  });
+  // tocar na linha abre o lançamento para alterar (e, de lá, apagar)
+  document.querySelectorAll("[data-editar]").forEach(b => {
+    const abrir = () => { const [cad, id] = b.dataset.editar.split(":"); alterarLancamento(cad, id); };
+    b.onclick = e => { if (!e.target.closest("button,a,input,select")) abrir(); };
+    b.onkeydown = e => { if ((e.key === "Enter" || e.key === " ") && e.target === b) { e.preventDefault(); abrir(); } };
+  });
+  document.querySelectorAll("[data-valorfixo]").forEach(i => i.onchange = () => {
+    const g = livro.dono.gastosFixos.find(x => x.id === i.dataset.valorfixo); if (!g) return;
+    if (!g.valores) g.valores = {};
+    const n = FormLancamento.centavos(i.value), k = chaveMes(ref);
+    if (n > 0) g.valores[k] = n; else delete g.valores[k];
+    salvar("dono");
+  });
+  const cf = document.getElementById("copiarFixos");
+  if (cf) cf.onclick = () => {
+    const km = chaveMes(ref), ant = mesAnterior(km), lista = fixosParaCopiar(km);
+    lista.forEach(g => { g.valores[km] = Number(g.valores[ant]); });
+    salvar("dono");
+  };
+  document.querySelectorAll("[data-dia]").forEach(i => i.onchange = () => {
+    const g = livro.dono.gastosFixos.find(x => x.id === i.dataset.dia);
+    if (g) { const n = Number(i.value); g.dia = n >= 1 && n <= 31 ? n : null; salvar("dono"); }
+  });
+
+  const pega = f => Object.fromEntries(new FormData(f));
+  // erro junto do campo: o texto vai no fim do formulário, o campo fica marcado e recebe o foco
+  const erroNoForm = (f, texto, campo) => {
+    delete f.dataset.limpo;
+    let e = f.querySelector(".form-erro");
+    if (!e) { e = document.createElement("p"); e.className = "form-erro"; e.setAttribute("role", "alert"); f.appendChild(e); }
+    e.textContent = texto;
+    const c = campo && f.querySelector(`[name="${campo}"]`);
+    if (c) { c.setAttribute("aria-invalid", "true"); c.focus(); c.addEventListener("input", () => { c.removeAttribute("aria-invalid"); e.textContent = ""; }, { once:true }); }
+  };
+  const liga = (idForm, fn) => { const f = document.getElementById(idForm); if (f) f.onsubmit = e => { e.preventDefault(); const d = pega(f); f.dataset.limpo = "1"; fn(f, d); }; };
+
+  // ordenar: cabeçalho no computador, caixa de escolha no celular
+  document.querySelectorAll("[data-ord]").forEach(b => b.onclick = () => {
+    const [qual, c] = b.dataset.ord.split(":"), o = ordem[qual];
+    ordem[qual] = o.c === c ? { c, d:-o.d } : { c, d: c === "data" || c === "valor" ? -1 : 1 };
+    desenhar();
+  });
+  document.querySelectorAll("[data-filtrocat]").forEach(s => s.onchange = () => { filtroCat[s.dataset.filtrocat] = s.value; desenhar(); });
+  document.querySelectorAll("[data-ordsel]").forEach(s => s.onchange = () => {
+    const [c, d] = s.value.split(":"); ordem[s.dataset.ordsel] = { c, d:Number(d) }; desenhar();
+  });
+  // clicar num mês do gráfico abre aquele mês
+  // clicar num mês (no gráfico ou na lista) abre os lançamentos daquele mês
+  GraficoMeses.ligar(document.getElementById("tela"), k => { ref = new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1, 1); vistaDin = "mes"; desenhar(); window.scrollTo(0, 0); });
+  document.querySelectorAll("[data-meus]").forEach(b => b.onclick = () => { meusEscopo = b.dataset.meus; meusLimite = 60; desenhar(); });
+  document.querySelectorAll("[data-meus-mais]").forEach(b => b.onclick = () => { meusLimite += 60; desenhar(); });
+  document.querySelectorAll("[data-vd]").forEach(b => b.onclick = () => {
+    vistaDin = b.dataset.vd;
+    // o fechamento abre no mês que acabou de fechar quando o mês aberto ainda não terminou
+    if (vistaDin === "fech" && chaveMes(ref) >= chaveMes(new Date())) { const d = new Date(); ref = new Date(d.getFullYear(), d.getMonth() - 1, 1); }
+    desenhar();
+  });
+  document.querySelectorAll("[data-precisa]").forEach(b => b.onclick = () => irPrecisa(avisosNaTela[Number(b.dataset.precisa)]));
+  // "Ver o fechamento" troca a tela pela casca, como os avisos de "O que precisa de você" (06/10/2026):
+  // antes trocava só aqui dentro, e o título, a aba acesa e o Voltar ficavam na Tudo
+  document.querySelectorAll("[data-fech]").forEach(b => b.onclick = () => {
+    const k = b.dataset.fech;
+    if (aba === "tudo") voltaDoFech = ref;
+    ref = new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1, 1);
+    vistaDin = "fech";
+    const casca = (() => { try { return window.top !== window.self && typeof window.parent.mostrar === "function" ? window.parent : null; } catch(e){ return null; } })();
+    if (casca) casca.mostrar("carteira");
+    else { aba = "carteira"; try { location.replace("#carteira"); } catch(e){} desenhar(); }
+    window.scrollTo(0, 0);
+  });
+
+  // o formulário único de lançamento (lancamento.js) entra em cada lugar marcado na tela
+  document.querySelectorAll("[data-lanc]").forEach(el => FormLancamento.montar(el, configLancamento(el.dataset.lanc || null)));
+  vigiarFab();
+  liga("fFixo", (f, d) => {
+    const v = FormLancamento.centavos(d.valor); if (!(v > 0)) { erroNoForm(f, "Falta o valor.", "valor"); return; }
+    const valores = {};
+    for (let m = ref.getMonth(); m < 12; m++) valores[ref.getFullYear() + "-" + String(m + 1).padStart(2, "0")] = v;
+    livro.dono.gastosFixos.push({ id:novoId(), descricao:d.descricao, categoria:d.categoria, dia:Number(d.dia), valores });
+    salvar("dono"); });
+  liga("fPend", (f, d) => {
+    const total = FormLancamento.centavos(d.total), pago = FormLancamento.centavos(d.pago);
+    if (!(total > 0)) { erroNoForm(f, "Falta o valor total.", "total"); return; }
+    if (pago > total + 0.005) { erroNoForm(f, "O que já foi pago passa do valor total.", "pago"); return; }
+    pendencias().push({ id:novoId(), nome:d.nome.trim(), tipo:d.tipo === "pagar" ? "pagar" : "receber", origem:(d.origem || "").trim(),
+      inicio:d.inicio || "", fim:"", total, pago, obs:(d.obs || "").trim() });
+    salvar("dono"); });
+  // campo de dinheiro em que a vírgula anda sozinha (o mesmo jeito do formulário de lançamento)
+  document.querySelectorAll("[data-dinheiro]").forEach(i => i.oninput = () => { const v = FormLancamento.mascara(i.value); if (i.value !== v) i.value = v; });
+  liga("fCategoria", (f, d) => {
+    const nome = String(d.nome || "").trim().replace(/\s+/g, " ").replace(/\.+$/, ""), cad = d.cad === "casa" ? "casa" : "dono";
+    const k = t => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    if (!nome) { erroNoForm(f, "Falta o nome.", "nome"); return; }
+    const existentes = cad === "casa" ? catsCasa() : catsDinheiro();
+    if (existentes.some(c => k(c) === k(nome))) { erroNoForm(f, "Essa categoria já existe.", "nome"); return; }
+    if (NOMES_ANTIGOS.includes(k(nome))) { erroNoForm(f, "Esse nome é de uma categoria antiga, que o app troca sozinho. Escolha outro.", "nome"); return; }
+    const lista = livro[cad].categoriasExtras || (livro[cad].categoriasExtras = []);
+    const velha = lista.find(x => x.oculta && k(x.nome) === k(nome));
+    if (velha) { delete velha.oculta; velha.grupo = d.grupo; } else lista.push({ id:novoId(), nome, grupo:d.grupo || GRUPO_MINHAS });
+    salvar(cad);
+  });
+  { const f = document.getElementById("fCategoria");
+    if (f) f.elements.cad.onchange = () => { const g = f.elements.grupo; g.innerHTML = g.dataset[f.elements.cad.value === "casa" ? "grupoCasa" : "grupoPessoal"]; }; }
+  document.querySelectorAll("[data-cat-tirar]").forEach(b => b.onclick = () => {
+    const [cad, id] = b.dataset.catTirar.split(":"), x = (livro[cad].categoriasExtras || []).find(c => c.id === id); if (!x) return;
+    if (!confirm(`Tirar a categoria ${x.nome}? O que já foi lançado nela continua com esse nome.`)) return;
+    x.oculta = true; salvar(cad);
+  });
+  liga("fLimite", (f, d) => { const v = FormLancamento.centavos(d.valor); if (!d.categoria || !(v > 0)) return; limites()[d.categoria] = v; salvar("dono"); });
+  document.querySelectorAll("[data-limite-x]").forEach(b => b.onclick = () => { delete limites()[b.dataset.limiteX]; salvar("dono"); });
+  const daPend = id => pendencias().find(p => p.id === id);
+  document.querySelectorAll("[data-pend-pago]").forEach(b => b.onclick = () => {
+    pendParte = b.dataset.pendPago; desenhar();
+    const i = document.querySelector(`[data-pend-parte="${pendParte}"] input`); if (i) i.focus();
+  });
+  document.querySelectorAll("[data-pend-parte-nao]").forEach(b => b.onclick = () => { pendParte = null; desenhar(); });
+  document.querySelectorAll("[data-pend-parte]").forEach(f => f.onsubmit = e => {
+    e.preventDefault();
+    const p = daPend(f.dataset.pendParte); if (!p) return;
+    const v = lerValorBR(f.elements.valor.value);
+    if (!(v > 0)) { erroNoForm(f, "Falta o valor.", "valor"); return; }
+    if (v > restantePend(p) + 0.005 && f.dataset.passou !== String(v)) {
+      f.dataset.passou = String(v);
+      erroNoForm(f, `${dinheiro(v)} passa do que falta (${dinheiro(restantePend(p))}). Toque em Registrar de novo para guardar assim mesmo.`);
+      return;
+    }
+    p.pago = Math.round(((Number(p.pago) || 0) + v) * 100) / 100;
+    if (restantePend(p) < 0.005) { p.quitada = true; p.fim = p.fim || hojeISO(); }
+    pendParte = null;
+    salvar("dono");
+  });
+  document.querySelectorAll("[data-pend-quitar]").forEach(b => b.onclick = () => {
+    const p = daPend(b.dataset.pendQuitar); if (!p) return;
+    if (!confirm(`Quitar a pendência de ${p.nome}? Fica guardada em Quitadas.`)) return;
+    p.quitada = true; p.fim = p.fim || hojeISO(); salvar("dono");
+  });
+  document.querySelectorAll("[data-pend-reabrir]").forEach(b => b.onclick = () => {
+    const p = daPend(b.dataset.pendReabrir); if (!p) return;
+    // paga por inteiro: reabrir só faz sentido zerando o que foi pago, então pergunta antes (antes zerava calado)
+    if (restantePend(p) < 0.005 && Number(p.pago) > 0 && !confirm(`Já foram pagos ${dinheiro(Number(p.pago))}. Reabrir zera esse valor. Continuar?`)) return;
+    delete p.quitada; if (restantePend(p) < 0.005) p.pago = 0; salvar("dono");
+  });
+  document.querySelectorAll("[data-pend-apagar]").forEach(b => b.onclick = () => {
+    const p = daPend(b.dataset.pendApagar); if (!p || !confirm(`Apagar a pendência de ${p.nome}?`)) return;
+    livro.dono.pendencias = pendencias().filter(x => x.id !== p.id); salvar("dono");
+  });
+  const bp = document.getElementById("pendPlanilha"), ap = document.getElementById("pendArquivo");
+  if (bp && ap) {
+    bp.onclick = () => ap.click();
+    ap.onchange = async e => {
+      const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+      try { const r = await importarPendencias(f); salvar("dono");
+        recado(r.novas ? `Vieram ${r.novas} pendência${r.novas === 1 ? "" : "s"} da planilha${r.repetidas ? " (" + r.repetidas + " já estavam aqui)" : ""}.` : "Nenhuma pendência nova: as da planilha já estavam aqui."); }
+      catch(err){ recado("Não consegui ler: " + err.message, true); }
+    };
+  }
+  liga("fReserva", (f, d) => { livro.dono.reserva = { saldoBase:FormLancamento.centavos(d.saldoBase),
+    dataBase:d.dataBase || null, meta:FormLancamento.centavos(d.meta) }; salvar("dono"); });
+  liga("fDivisao", (f, d) => { const n = Number(d.divisao); livro.casa.divisao = Math.min(Math.max(Number.isFinite(n) && String(d.divisao).trim() !== "" ? n : 50, 0), 100) / 100; salvar("casa"); });
+  liga("fPessoas", (f, d) => {
+    const antigos = livro.casa.pessoas.slice(), novos = [d.p1.trim(), d.p2.trim()];
+    // dois nomes iguais juntariam as compras das duas pessoas numa só, sem volta
+    if (!novos[0] || !novos[1] || novos[0].toLowerCase() === novos[1].toLowerCase()) { erroNoForm(f, "Os dois nomes precisam ser diferentes.", "p2"); return; }
+    // quem já comprou continua sendo a mesma pessoa, com o nome novo. Nome que já existia fica com as compras
+    // dele: só trocar a ordem dos dois nomes não troca mais quem comprou o quê (06/10/2026)
+    const saem = antigos.filter(n => !novos.includes(n)), chegam = novos.filter(n => !antigos.includes(n));
+    const troca = {}; saem.forEach((n, i) => { if (chegam[i]) troca[n] = chegam[i]; });
+    livro.casa.lancamentos.forEach(l => { if (troca[l.quem]) l.quem = troca[l.quem]; });
+    livro.casa.pessoas = novos; salvar("casa");
+  });
+}
+
+// a barra ‹ mês › acompanha a rolagem: quando sai pelo alto, uma cópia pequena fica fixa (periodo-fixo.js)
+PeriodoFixo.iniciar(() => document.querySelectorAll("#tela .mes"));
+
+// o botão flutuante só aparece quando o "+ Novo lançamento" da tela saiu da vista
+let fabObs = null;
+function vigiarFab(){
+  const fab = document.getElementById("fab"), alvo = document.querySelector("[data-lanc]");
+  if (fabObs) fabObs.disconnect();
+  if (!alvo || !("IntersectionObserver" in window)) return;
+  fabObs = new IntersectionObserver(es => fab.classList.toggle("fora", es[es.length - 1].isIntersecting));
+  fabObs.observe(alvo);
+}
+// abre o formulário de lançamento da tela em que ele está e leva até ele. É o que o botão + faz:
+// o do celular e, na casca, o + que escolhe entre lançamento e recebimento (06/10/2026)
+function abrirLancamento(){
+  const k = abaDoEndereco(); if (k && k !== aba) { aba = k; desenhar(); }   // a casca pode ter acabado de trocar a tela
+  // nas telas de fixos, pendências e mês a mês não há formulário: o botão volta para os lançamentos
+  if (!document.querySelector("[data-lanc]") && aba === "carteira") { vistaDin = "mes"; desenhar(); }
+  const el = document.querySelector("[data-lanc]"); if (!el) return;
+  FormLancamento.abrir(configLancamento(el.dataset.lanc || null));
+  desenhar();
+  const novo = document.querySelector("[data-lanc]"); if (novo) novo.scrollIntoView({ block:"start", behavior:"smooth" });
+}
+window.abrirLancamento = abrirLancamento;
+// dentro da casca o + do celular abre a escolha da casca (lançamento ou recebimento); sozinho, abre o formulário
+document.getElementById("fab").onclick = () => {
+  try { if (window.top !== window.self && window.parent.MaisLancar) { window.parent.MaisLancar.abrir(); return; } } catch(e){}
+  abrirLancamento();
+};
+document.getElementById("abas").onclick = e => {
+  const b = e.target.closest("[data-a]"); if (!b) return; aba = b.dataset.a;
+  try { location.hash = aba; } catch(e){}
+  desenhar();
+};
+// A casca (index.html) troca de aba mudando o endereço: app.html#casa.
+function abaDoEndereco(){
+  let k = (location.hash || "").replace("#", "");
+  if (k === "dinheiro") k = "carteira";   // endereço antigo
+  return ABAS.some(([c]) => c === k) ? k : null;
+}
+window.addEventListener("hashchange", () => {
+  const k = abaDoEndereco();
+  if (k && k !== aba) aba = k;
+  if (aba === "tudo" && voltaDoFech) { if (vistaDin === "fech") { vistaDin = "mes"; ref = voltaDoFech; } voltaDoFech = null; }
+  desenhar();   // redesenha mesmo na mesma aba: a Clínica ou a Carteira podem ter mudado
+});
+// a Clínica e a Carteira gravam neste mesmo navegador: quando mudam, a aba Tudo acompanha
+window.addEventListener("storage", e => {
+  const digitando = document.activeElement && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+  if (!digitando && (e.key === "controle-unico-clinica-cache" || e.key === "cripto-v1-visita")) desenhar();
+});
+document.getElementById("tema").onclick = () => {
+  const r = document.documentElement;
+  r.dataset.theme = r.dataset.theme === "dark" ? "light" : "dark";
+  try { localStorage.setItem("cu-tema", r.dataset.theme); } catch(e){}
+};
+
+document.getElementById("exportar").onclick = () => {
+  const m = chaveMes(ref);
+  const abas = [
+    { nome:"Finanças completas", linhas:[["ID","Descrição","Categoria","Valor","Situação","Pago em","Vencimento","Mês previsto","Tipo","Pagamento","Observações","FITID","Arquivado"], ...FinancasOriginal.paraCaderno(livro.dono).registros.map(r => [r.id,r.descricao,r.categoria,r.valor,r.situacao,r.pagoEm,r.vencimento,r.mesPrevisto,r.tipo,r.pagamento,r.observacoes,r.fitid,r.arquivado?"Sim":"Não"])] },
+    { nome:"Lançamentos", linhas:[["Data","Tipo","Descrição","Categoria","Forma de Pagamento","Valor"],
+      ...livro.dono.lancamentos.map(l => [l.data, l.tipo, l.descricao, l.categoria, l.forma, l.valor])] },
+    { nome:"Gastos Fixos " + ref.getFullYear(), linhas:[["Descrição","Categorias","Dia", ...MESES.map(n => n[0].toUpperCase() + n.slice(1))],
+      ...livro.dono.gastosFixos.map(g => [g.descricao, g.categoria, g.dia || "-",
+        ...MESES.map((n, i) => valorFixo(g, ref.getFullYear() + "-" + String(i + 1).padStart(2, "0")) || "-")])] },
+    { nome:"Casa", linhas:[["Data","Quem Comprou?","Descrição","Categorias","Valor"],
+      ...livro.casa.lancamentos.map(l => [l.data, l.quem, l.descricao, l.categoria, l.valor])] },
+    { nome:"Pendências", linhas:[["Nome","Tipo","Origem","Início","Fim","Valor Total","Valor Pago","Restante","Status","Observações"],
+      ...pendencias().map(p => [p.nome, p.tipo === "pagar" ? "A receber" : "A pagar", p.origem || "-", p.inicio || "-", p.fim || "-", p.total, Number(p.pago) || 0, restantePend(p), pendQuitada(p) ? "Quitado" : "Pendente", p.obs || ""])] }
+  ];
+  const w = janelaClinica();
+  if (w) {
+    const pac = {}; w.dados.pacientes.forEach(p => pac[p.id] = p);
+    abas.push({ nome:"Recebimentos", linhas:[["Data","Prontuário","Nome","Valor","Meio","Observação"],
+      ...w.dados.pagamentos.map(g => [g.data, (pac[g.pacienteId] || {}).codigo || g.codigo || "-", (pac[g.pacienteId] || {}).nome || "-", g.valor, g.meio || "-", g.obs || ""])] });
+    // os anúncios da aba Marketing da Clínica e quem veio de cada um (01/10/2026)
+    const origens = w.dados.origens || {}, vazio = v => (v === undefined || v === null || v === "") ? "-" : v;
+    abas.push({ nome:"Anúncios", linhas:[["Post","Começou","Terminou","Colocado","Gasto","Visualizações","Alcance","Conversas","Seguidores","Métricas lidas em","Pacientes"],
+      ...(w.dados.anuncios || []).map(a => [a.post || "-", vazio(a.inicio), vazio(a.fim), vazio(a.colocado), vazio(a.gasto), vazio(a.views), vazio(a.alcance), vazio(a.conversas), vazio(a.seguidores), vazio(a.lidoEm),
+        Object.keys(origens).filter(c => origens[c].anuncio === a.id).join(", ") || "-"])] });
+    // pacientes, ciclos e sessões, para a Clínica também ter a volta em planilha (05/10/2026)
+    if (typeof w.abasParaPlanilha === "function") abas.push(...w.abasParaPlanilha());
+  }
+  baixar(xlsx(abas), `Controle Único ${m}.xlsx`);
+};
+
+// cópia dos dois cadernos num arquivo só, e a volta dele
+document.getElementById("exportarJson").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ financas:FinancasOriginal.paraCaderno(livro.dono), casa:livro.casa }, null, 2)], { type:"application/json" }));
+  a.download = "controle-unico-dinheiro-e-casa-" + hojeISO() + ".json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+document.getElementById("importarJson").onclick = () => document.getElementById("arquivoJson").click();
+document.getElementById("arquivoJson").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try { importarCadernos(JSON.parse(await f.text())); }
+  catch(err){ recado("Não consegui ler esse arquivo: " + err.message, true); }
+};
+function importarCadernos(j){
+  // a cópia da semana no Drive é o próprio caderno, sem o envelope do "Exportar dados"
+  if (j && j.caderno === "dinheiro" && !j.dinheiro) j = { dinheiro:j };
+  else if (j && j.caderno === "casa" && !j.casa) j = { casa:j };
+  const vem = [];
+  if(j.caderno === "financas" && Array.isArray(j.registros)) j={financas:j};
+  if(j.financas){ Financas.validar(j.financas); vem.push(["dono", j.financas, `${j.financas.registros.length} registros financeiros`]); }
+  if(j.dinheiro) throw new Error("Esse backup usa o formato financeiro anterior. Ele precisa ser convertido antes de substituir seu caderno atual.");
+  if (j.casa && Array.isArray(j.casa.lancamentos)) vem.push(["casa", j.casa, `${j.casa.lancamentos.length} compras da casa`]);
+  if (!vem.length) throw new Error("o arquivo não tem caderno de dinheiro nem de casa");
+  if (!confirm("Isto substitui o que está no app por: " + vem.map(v => v[2]).join(" e ") + ". Seguir?")) return;
+  vem.forEach(([c, d]) => { livro[c] = arrumar[c](Object.assign(VAZIO[c](), d)); armazem.gravar(c, livro[c]); });
+  desenhar();
+}
+
+// O controle da Pessoa 2 (ana.html) lança na Casa por aqui, sem sair da tela dos gastos dela (01/10/2026).
+window.casaParaFora = {
+  pessoas: () => livro.casa.pessoas.slice(),
+  categorias: () => catsCasa(),
+  grupos: () => gruposCasa(),
+  // devolve o id, para o "Desfazer" do formulário
+  lancar: d => { const id = novoId(); livro.casa.lancamentos.push({ id, data:d.data, quem:d.quem, descricao:(d.descricao || "").trim() || "-",
+    categoria:d.categoria, valor:Number(d.valor) }); salvar("casa"); return id; },
+  desfazer: id => { livro.casa.lancamentos = livro.casa.lancamentos.filter(x => x.id !== id); salvar("casa"); }
+};
+
+try { const t = localStorage.getItem("cu-tema"); if (t) document.documentElement.dataset.theme = t; } catch(e){}
+{ const k = abaDoEndereco(); if (k) aba = k; }
+// Dentro do controle da Pessoa 2 só a Casa está aberta: "Importar dados" trocaria o caderno da casa inteiro
+// por um arquivo, e "Exportar dados" sairia com o caderno do dinheiro vazio. Fica só a planilha.
+if (PERFIL === "ana") ["exportarJson", "importarJson"].forEach(id => { const b = document.getElementById(id); if (b) b.hidden = true; });
+// Dentro da casca quem manda nas abas é a barra de cima: a daqui sairia repetida.
+try { if (window.top !== window.self) document.getElementById("abas").hidden = true; } catch(e){}
+desenhar();
+Nuvem.iniciar();
+</script>
+<script src="financas-original-ui.js?v=20261024-original-2"></script>
+</body>
+</html>

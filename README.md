@@ -1,23 +1,21 @@
 # Controle Único
 
-Aplicativo pessoal de finanças em HTML, CSS e JavaScript, preparado para GitHub Pages.
+Aplicativo pessoal em HTML, CSS e JavaScript, hospedado no GitHub Pages. A estrutura original reúne Tudo, Carteira (Dinheiro, Casa e Cripto), Clínica, Conferência, Guia, Formulação de Caso, Rede PBT e controle compartilhado.
 
-O repositório contém somente código e imagens. Os registros financeiros ficam em um arquivo JSON privado no Google Drive de quem usa; não devem ser enviados a este repositório.
+O repositório contém somente código e imagens. Os dados ficam em cadernos privados no Google Drive e em uma cópia no navegador. Nenhum registro pessoal deve ser enviado ao repositório.
 
-## Hospedagem
+## Finanças adaptadas
 
-Em Settings → Pages, selecionar Deploy from a branch, branch master e pasta raiz. O arquivo `.nojekyll` permite servir os arquivos estáticos diretamente. Cada atualização enviada à branch publica o código novamente. Registros financeiros são atualizados no Drive e não exigem uma publicação do site.
+O módulo Dinheiro usa o caderno `financas`, modelo `financas-vinicius-v1`, com `registros[]`. Preserva categorias, situações, datas reais ou ausentes, mês previsto, valores desconhecidos, ressarcimentos, FITIDs e origem da migração.
 
-## Conexão com Google Drive
+`financas-original-core.js` adapta os registros ao original, sem duplicar despesas nem renomear categorias. Reserva, receitas, movimentos da reserva, pendências e limites ficam na extensão `organizacao` do mesmo caderno. Casa e Clínica têm cadernos separados.
 
-O login solicita a permissão `drive.file` e usa Google Picker para escolher o caderno existente. Não precisa de login do ChatGPT.
+`financas-original-ui.js` oferece filtros de categoria, busca, situação e período, categorias que abrem os lançamentos, editor com pagamento explícito e importação revisada de OFX Cora. Uma conta não se torna paga pela chegada do vencimento. Sem receitas informadas, o app não presume saldo disponível.
 
-No Google Cloud, ativar Drive API e Picker API, configurar o consentimento e criar um cliente OAuth Web. Autorizar a origem exata do GitHub Pages e a URI de retorno completa, com a pasta do repositório e `/` no final. A chave do Picker precisa das restrições recomendadas pelo Google.
+## Google e publicação
 
-Preencher apenas os identificadores públicos de navegador em `config.js`. Nunca incluir senha, segredo OAuth, token de acesso ou conteúdo financeiro nos arquivos do site. A configuração ainda não preenchida bloqueia o login com uma mensagem clara.
+O login usa a mesma aba e o escopo `drive.file`. Selecionar o caderno existente no Google Picker. Identificadores públicos ficam em `config.js`; nunca incluir senha, segredo OAuth, token ou dados dos cadernos. A chave do Picker é restrita por site e API.
 
-## Uso
+GitHub Pages publica a branch `master`, pasta raiz. `versao.json` e a versão dos recursos evitam código antigo no navegador. Atualizar dados no Drive não exige republicar o site.
 
-Abrir o site, entrar com o Google e escolher o caderno financeiro no Drive. Para começar por uma cópia local, usar Dados e cópias → Carregar cópia JSON. Até a conexão com Drive estar autorizada, alterações ficam somente no navegador. Usar Baixar cópia dos dados para preservar alterações locais.
-
-O aplicativo permite cadastrar e editar gastos, registrar pagamentos nas contas já previstas, consultar categorias e histórico mensal, e revisar débitos de extratos Cora. Importação usa FITID para evitar duplicatas e exige confirmação de categorias e de vínculos a contas existentes. Créditos não são tratados automaticamente como renda.
+A origem recebida permanece preservada fora da pasta pública. O script privado `preparar-original-vinicius.cjs` reaplica as adaptações sem copiar dados para o código. O app não cria cadernos vazios no Drive automaticamente. Há exportações JSON e Excel.

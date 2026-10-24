@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script src="config.js?v=20261024-original-2"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Controle da Pessoa 2</title>
+<meta name="description" content="Gastos, plantões e casa da Pessoa 2, guardados no Google Drive de quem usa.">
+<link rel="manifest" href="ana.webmanifest">
+<meta name="theme-color" content="#5b2a82" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#2c1840" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Controle">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icone-180.png">
+<link rel="icon" href="icone-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="stylesheet" href="tema.css?v=20261024-original-2">
+<style>
+/* toque: o navegador não espera para ver se é duplo toque, e o dedo acerta o alvo */
+button,a,summary,select,input,label{touch-action:manipulation}
+/* O controle da Pessoa 2 (30/09/2026): o mesmo desenho do Dinheiro e da Casa do Controle Único,
+   numa página própria, com link só dela. A Casa é a mesma do app dele, carregada ao lado. */
+:root{  --barra:#5b2a82; --barra-ink:#ffffff;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){  --barra:#2c1840; --barra-ink:#f2eaf9;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{  --barra:#2c1840; --barra-ink:#f2eaf9;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
+  display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none !important}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .warn{color:var(--warn)}
+.nota{font-size:12.5px;color:var(--faint)}
+.vazio{color:var(--muted);font-size:14px;padding:8px 0}
+
+/* barra de cima: nome, estado do Drive, tema */
+header{flex:none;background:var(--surface);border-bottom:1px solid var(--line);padding:8px 16px;padding-top:calc(8px + env(safe-area-inset-top,0px));
+  display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:9px;font-weight:700;margin-right:auto}
+.selo{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700}
+.nuvem{font-size:12.5px;color:var(--faint);display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0;min-width:0}
+.nuvem-ponto{width:9px;height:9px;border-radius:50%;background:var(--faint);flex:none}
+.nuvem-ponto.ok{background:#2f9e5b} .nuvem-ponto.indo{background:#d49a1c} .nuvem-ponto.erro{background:#d0453a}
+#nuvem-acoes{display:flex;gap:6px;flex-wrap:wrap}
+nav{flex:none;display:flex;gap:2px;overflow-x:auto;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+nav button{border:0;background:transparent;color:var(--muted);font-size:14px;padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:7px}
+nav button svg{width:18px;height:18px;flex:none}
+nav button[aria-pressed="true"]{background:var(--bg);color:var(--text);font-weight:600;box-shadow:inset 0 0 0 1px var(--line)}
+.palco{flex:1 1 auto;position:relative;min-height:0}
+#conteudo{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
+#q-casa{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+.wrap{max-width:1200px;margin:0 auto;padding:4px 24px 56px}
+
+/* botões */
+.b{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:7px 12px;cursor:pointer;font-size:14px}
+.b:hover{border-color:var(--faint)}
+.b.p{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:600}
+.b.s{font-size:13px;padding:5px 10px}
+.redondo{width:34px;height:34px;padding:0;display:inline-grid;place-items:center;font-size:17px}
+
+/* mês */
+.mes{display:flex;align-items:center;gap:10px;margin:10px 0 16px}
+.mes h1{margin:0;font-size:21px;font-weight:700;letter-spacing:-.01em;text-transform:capitalize;min-width:170px;text-align:center}
+.mes h1 span{color:var(--faint);font-weight:400}
+
+/* painéis */
+.painel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;min-width:0;container-type:inline-size}
+.painel h2{margin:0 0 14px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.painel h2 .dir{margin-left:auto;font-weight:400;font-size:13px;color:var(--faint)}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.duas.larga{grid-template-columns:1.6fr 1fr;align-items:start}
+.coluna{display:grid;gap:18px;align-content:start;min-width:0}
+.aviso{background:var(--warn-soft);color:var(--text);border-radius:var(--radius);padding:10px 14px;font-size:14px;margin:0 0 14px}
+/* erro junto do botão e "Salvo." depois de gravar, no lugar da janelinha do navegador (19/10/2026) */
+.form-erro{grid-column:1/-1;flex-basis:100%;margin:0;font-size:13.5px;font-weight:600;color:var(--neg)}
+.form-erro:empty{display:none}
+.salvo{margin:8px 0 0;font-size:13.5px;font-weight:600;color:var(--pos)}
+.recado{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;max-width:min(560px,calc(100vw - 32px));
+  display:flex;gap:12px;align-items:center;background:var(--neg);color:#fff;border-radius:10px;padding:10px 12px 10px 16px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.recado button{border:0;background:transparent;color:inherit;font-size:20px;line-height:1;cursor:pointer;min-width:32px;min-height:32px}
+
+/* situação do mês */
+.situ{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:stretch}
+.situ > .veredito{order:2}   /* no celular vem primeiro; no computador, à direita */
+.linha-k{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.k span{display:block;color:var(--muted);font-size:13px}
+.k b{display:block;font-size:26px;font-weight:700;letter-spacing:-.01em;line-height:1.2;margin-top:2px;white-space:nowrap}
+.k small{display:block;color:var(--faint);font-size:12px;margin-top:3px}
+.k.destaque b{font-size:32px}
+.veredito{border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;justify-content:center;gap:10px;background:var(--surface-2)}
+.veredito.pos{background:var(--pos-soft)} .veredito.neg{background:var(--neg-soft)}
+.veredito b{font-size:19px;line-height:1.2}
+.veredito p{margin:0;font-size:13.5px}
+.veredito.pos b{color:var(--pos)} .veredito.neg b{color:var(--neg)}
+
+/* rosca */
+.rosca{display:grid;grid-template-columns:170px minmax(0,1fr);gap:20px;align-items:center}
+.rosca > svg{width:170px;height:170px;display:block}
+.rosca .centro1{fill:var(--muted);font-size:11px;font-family:var(--font)}
+.rosca .centro2{fill:var(--text);font-size:16px;font-weight:700;font-family:var(--font)}
+.leg{list-style:none;margin:0;padding:0;font-size:14px}
+.leg li{display:flex;gap:8px;align-items:baseline;padding:5px 4px;border-top:1px solid var(--line)}
+.leg li:first-child{border-top:0}
+.leg i{width:10px;height:10px;border-radius:3px;flex:none;align-self:center}
+.leg .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leg b{font-weight:600;white-space:nowrap}
+.leg .pc{color:var(--faint);font-size:12px;min-width:44px;text-align:right}
+@container (max-width:460px){ .rosca{grid-template-columns:minmax(0,1fr);justify-items:center} .leg{width:100%} }
+
+/* números soltos */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--surface-2);border-radius:var(--radius);padding:10px 14px;min-width:0}
+.stat span{display:block;color:var(--muted);font-size:12px}
+.stat b{display:block;font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat small{display:block;color:var(--faint);font-size:11.5px}
+
+/* tabelas */
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th{text-align:left;color:var(--muted);font-weight:500;font-size:12.5px;padding:0 8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t th:first-child,table.t td:first-child{padding-left:0}
+table.t th:last-child,table.t td:last-child{padding-right:0}
+table.t .dir{text-align:right;white-space:nowrap}
+table.t tr:last-child td{border-bottom:0}
+td.c-data{color:var(--muted);white-space:nowrap;width:1%}
+td.c-data small{display:block;font-size:11.5px;color:var(--faint)}
+td.c-desc b{font-weight:500}
+td.c-cat,td.c-forma{color:var(--muted)}
+td.c-val{font-weight:600}
+td.c-x{width:1%}
+tr.fora td{opacity:.55} tr.fora td.c-val{text-decoration:line-through}
+table.t input.val{width:104px;padding:5px 8px;text-align:right}
+.so-cel{display:none}
+.x{border:0;background:transparent;color:var(--faint);cursor:pointer;font-size:18px;padding:0 4px;line-height:1;min-width:28px;min-height:28px}
+.x:hover{color:var(--neg)}
+.x.lapis{font-size:14px} .x.lapis:hover{color:var(--accent)}
+td.c-x{white-space:nowrap}
+.selo-b{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
+.selo-b.extra{background:var(--accent-soft);color:var(--accent)}
+.vai{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.vai input{width:18px;height:18px;accent-color:var(--accent)}
+table.valores input.val{width:84px}
+table.valores td,table.valores th{padding:6px 4px}
+
+/* formulários atrás de um botão */
+details.novo{margin:0 0 12px}
+details.novo > summary{list-style:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:var(--radius);font-size:14px}
+details.novo > summary::-webkit-details-marker{display:none}
+details.novo[open] > summary{margin-bottom:10px}
+form.linha{background:var(--surface-2);border-radius:var(--radius);padding:12px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));align-items:end}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--text)}
+details.origem{margin-top:14px;font-size:12.5px;color:var(--muted);line-height:1.6}
+details.origem summary{cursor:pointer;color:var(--faint)}
+.rolar{overflow-x:auto}
+.pe{margin-top:28px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+.pe a{color:var(--faint);font-size:13px}
+
+@media (max-width:960px){ .duas,.duas.larga{grid-template-columns:1fr} .situ{grid-template-columns:1fr;gap:16px} .situ > .veredito{order:0} }
+/* ---------- celular: barra roxa em cima, abas embaixo, como o app dele ---------- */
+@media (max-width:700px){
+  header{background:var(--barra);color:var(--barra-ink);border-bottom:0;padding:6px 12px;padding-top:calc(6px + env(safe-area-inset-top,0px))}
+  .selo{background:#fff;color:#5b2a82}
+  .nuvem{color:rgba(255,255,255,.85);order:3;width:100%;gap:6px 8px}
+  #nuvem-texto{flex:1 1 0;min-width:0}
+  .nuvem-ponto{box-shadow:0 0 0 2px rgba(255,255,255,.55)}
+  header .b{background:transparent;color:var(--barra-ink);border-color:rgba(255,255,255,.4)}
+  header .b.p{background:#fff;color:#5b2a82;border-color:#fff}
+  nav{order:3;display:grid;grid-template-columns:repeat(5,1fr);gap:0;overflow:visible;border-top:1px solid var(--line);border-bottom:0;
+    padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+  nav button{flex-direction:column;gap:2px;font-size:10.5px;padding:6px 1px;border-radius:10px;min-height:52px;justify-content:center}
+  nav button svg{width:22px;height:22px}
+  nav button[aria-pressed="true"]{background:transparent;color:var(--accent);box-shadow:none}
+  nav button[aria-pressed="true"] svg{background:color-mix(in srgb, var(--accent) 16%, transparent);border-radius:99px;padding:2px 12px;width:46px;box-sizing:content-box}
+  .palco{order:2}
+  .wrap{padding:0 12px 40px}
+  .mes{justify-content:space-between;margin:8px 0 12px}
+  .mes h1{font-size:19px;min-width:0}
+  .painel{padding:14px}
+  .duas{gap:12px;margin-top:12px} .coluna{gap:12px}
+  .linha-k{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .linha-k .k.destaque{grid-column:1 / -1}
+  .k b{font-size:21px} .k.destaque b{font-size:28px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .stat b{font-size:17px}
+  table.t:not(.valores) thead{display:none}
+  table.t:not(.valores) tr{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto;gap:0 8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+  td.c-x .x{padding:0;min-width:34px;min-height:40px}
+  ul.regras .x{min-width:34px;min-height:40px}
+  .vai{min-width:40px;min-height:40px;justify-content:center}
+  .vai input{width:22px;height:22px}
+  table.t:not(.valores) tr:last-child{border-bottom:0}
+  table.t:not(.valores) td{border:0;padding:0 !important}
+  table.plantoes tr{grid-template-columns:44px minmax(0,1fr) auto 30px auto !important}
+  table.plantoes tr{gap:0 6px} table.plantoes td.c-desc b,table.plantoes .so-cel{white-space:normal;overflow:visible}   /* o nome do local quebra em vez de ser cortado */
+  table.fixos tr{grid-template-columns:minmax(0,1fr) 96px 22px !important}
+  table.fixos input{width:100% !important}
+  table.entradas tr{grid-template-columns:minmax(0,1fr) auto 22px !important}
+  table.porpac tr{grid-template-columns:minmax(0,1fr) auto auto !important}
+  table.atend td.c-desc b{white-space:normal;overflow:visible}   /* o nome do paciente quebra em duas linhas em vez de ser cortado */
+  table.gastos td.c-desc b,table.gastos .so-cel,table.fixos td.c-desc b,table.fixos .so-cel{white-space:normal;overflow:visible}   /* descrição longa quebra em vez de ser cortada */
+  td.c-cat,td.c-forma{display:none}
+  .so-cel{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  td.c-desc{min-width:0} td.c-desc b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vai .rot{display:none}
+  form.linha{grid-template-columns:repeat(2,minmax(0,1fr))}
+  form.linha > div.largo{grid-column:1 / -1}
+  form.linha .b{width:100%}
+  .b:not(.redondo):not(.s){min-height:40px} .b.s{min-height:36px} .redondo{width:40px;height:40px}
+  summary{padding-block:8px}
+  .pe a{display:inline-block;padding:10px 8px}
+  input,select{font-size:16px}   /* abaixo de 16px o iPhone dá zoom ao tocar no campo */
+}
+/* iguais aos do app dele (01/10/2026): a escolha Pessoal ou Casa no lançamento e a ordem da lista */
+.chave{display:inline-flex;gap:4px;padding:4px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.chave button{border:0;background:transparent;color:var(--muted);padding:6px 16px;border-radius:7px;cursor:pointer;font-size:14px}
+.chave button[aria-pressed="true"]{background:var(--text);color:var(--bg);font-weight:600}
+th .ord{border:0;background:transparent;color:inherit;font:inherit;padding:0;cursor:pointer}
+th .ord:hover{color:var(--text)}
+th .ord[aria-pressed="true"]{color:var(--text);font-weight:700}
+.botoes-plantao{display:flex;flex-wrap:wrap;gap:0 8px;align-items:flex-start}
+.botoes-plantao > details{flex:0 1 auto} .botoes-plantao > details[open]{flex:1 1 100%;order:-1}
+#dRegras > p{font-size:13px;color:var(--muted);margin:0 0 6px}
+ul.regras{list-style:none;margin:8px 0 0;padding:0;font-size:14px;color:var(--text)}
+ul.regras li{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+ul.regras li:first-child{border-top:0} ul.regras li span{flex:1;min-width:0}
+.ordem-cel{display:none;margin:0 0 6px;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.ordem-cel select{width:auto;flex:1;padding:6px 8px}
+@media (max-width:700px){ .ordem-cel{display:flex} }
+</style>
+<script>window.PERFIL = "ana";   /* a Casa (app.html), carregada aqui dentro, lê isto e só abre o caderno da casa */</script>
+
+<script src="exportar-xlsx.js?v=20261024-original-2"></script>
+<script src="lancamento.js?v=20261024-original-2"></script>
+<script src="rotulos.js?v=20261024-original-2"></script>
+<script src="periodo-fixo.js?v=20261024-original-2"></script>
+<script src="grafico-meses.js?v=20261024-original-2"></script>
+<script src="nuvem.js?v=20261024-original-2"></script>
+</head>
+<body>
+<header>
+  <div class="marca"><div class="selo">A</div><span>Controle da Pessoa 2</span></div>
+  <p class="nuvem"><span class="nuvem-ponto" id="nuvem-ponto"></span><span id="nuvem-texto">Carregando…</span>
+    <button class="b s p" id="nuvem-entrar" type="button">Entrar com o Google</button><span id="nuvem-acoes"></span></p>
+  <button class="b s" id="tema" type="button" title="Tema claro ou escuro" aria-label="Tema claro ou escuro">◐</button>
+</header>
+
+<nav id="abas" aria-label="Telas">
+  <button data-a="mes" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>Mês</span></button>
+  <button data-a="plantoes" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M12 13v4M10 15h4"/></svg><span>Plantões</span></button>
+  <button data-a="atendimentos" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg><span>Atendimentos</span></button>
+  <button data-a="gastos" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M4 7l11-3v3"/><circle cx="16" cy="13.5" r="1.3" fill="currentColor"/></svg><span>Gastos</span></button>
+  <button data-a="casa" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>Casa</span></button>
+</nav>
+
+<main class="palco" id="palco">
+  <div id="conteudo"><div class="wrap"><div id="chegou"></div><div id="tela"></div>
+    <div class="pe"><button class="b s" id="exportar" type="button">Baixar planilha</button><button class="b s" id="sair" type="button" onclick="Nuvem.sair()">Sair deste aparelho</button><a href="guia.html?para=ana">Guia rápido</a><a href="privacidade.html">Privacidade</a></div></div></div>
+</main>
+
+<script>
+// ===================================================================
+// Controle da Pessoa 2. Um caderno no Google Drive, "Controle Único - Pessoa 2.json", criado por
+// Dono e compartilhado com ela: o app dele não mostra este caderno; quem abre este
+// link (ela, ou ele para conferir) vê e edita. Veio da planilha Controle Financeiro (Pessoa 2).
+// Regra dos plantões (Dono, 30/09/2026): o salário do hospital A e da hospital B cai no mês
+// seguinte ao plantão; o de quem não está marcado assim cai no mesmo mês.
+// Este arquivo é público: nenhum dado pessoal fica escrito aqui.
+// ===================================================================
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const DIAS = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+const DIAS_CURTOS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const FORMAS = ["PIX","Crédito","Débito","Dinheiro"];
+const PERIODOS = ["Diurno","Noturno","24 horas"];
+const CATEGORIAS_PADRAO = ["Alimentação","Ifood","Transporte","Saúde","Entretenimento","Assinaturas","Comunicação","Estudos","Serviços"];
+const CH_CACHE = "controle-unico-ana-cache", CH_CASA = "controle-unico-casa-cache";
+
+const VAZIO = () => ({ versao:1, caderno:"ana", atualizadoEm:null, nomeNaCasa:"", categorias:CATEGORIAS_PADRAO.slice(),
+  locais:[], tabelaPlantao:{}, plantoes:[], atendimentos:[], lancamentos:[], gastosFixos:[], receitasFixas:[], emprestimos:[], regrasPlantao:[] });
+function arrumar(d){
+  const n = Object.assign(VAZIO(), d || {});
+  ["locais","plantoes","atendimentos","lancamentos","gastosFixos","receitasFixas","emprestimos","categorias","regrasPlantao"].forEach(k => { if (!Array.isArray(n[k])) n[k] = []; });
+  if (!n.categorias.length) n.categorias = CATEGORIAS_PADRAO.slice();
+  if (!n.tabelaPlantao || typeof n.tabelaPlantao !== "object") n.tabelaPlantao = {};
+  return n;
+}
+const lerLocal = k => { try { const t = localStorage.getItem(k); return t ? JSON.parse(t) : null; } catch(e){ return null; } };
+let cad = arrumar(lerLocal(CH_CACHE));
+
+const nuvem = Nuvem.caderno({
+  id:"ana", nome:"Controle Único - Pessoa 2.json", rotulo:"o controle da Pessoa 2", compartilhado:true,
+  obter: () => cad,
+  aplicar: d => { cad = arrumar(d); try { localStorage.setItem(CH_CACHE, JSON.stringify(cad)); } catch(e){} desenhar(); },
+  temDados: d => !!(d && ((d.lancamentos || []).length || (d.plantoes || []).length || (d.atendimentos || []).length || (d.gastosFixos || []).length || (d.receitasFixas || []).length))
+});
+function salvar(){
+  cad.atualizadoEm = new Date().toISOString();
+  try { localStorage.setItem(CH_CACHE, JSON.stringify(cad)); } catch(e){}
+  nuvem.mudou(); desenhar();
+}
+
+// ---------- utilidades ----------
+let aba = "mes";
+let ref = new Date(); ref.setDate(1);
+const novoId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+const pad = n => String(n).padStart(2, "0");
+const dinheiro = v => (Number(v) || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+const redondo = v => (v < 0 ? "−" : "") + "R$ " + Math.round(Math.abs(Number(v) || 0)).toLocaleString("pt-BR");
+const sinalDin = v => (v < -0.005 ? "−" : "") + dinheiro(Math.abs(v));
+const pctTxt = (a, b) => (b > 0 ? (a / b * 100) : 0).toLocaleString("pt-BR", { maximumFractionDigits:1 }) + "%";
+const soma = (a, f) => a.reduce((s, x) => s + (Number(f ? f(x) : x) || 0), 0);
+const escH = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+// na tela, categoria e descrição terminam com ponto (02/10/2026); o dado guardado continua como foi digitado
+const comPonto = FormLancamento.comPonto;
+const chaveMes = d => d.getFullYear() + "-" + pad(d.getMonth() + 1);
+const km = () => chaveMes(ref);
+const nomeMes = k => MESES[Number(k.slice(5, 7)) - 1];
+const mesAntes = k => { const [a, m] = k.split("-").map(Number); return m === 1 ? (a - 1) + "-12" : a + "-" + pad(m - 1); };
+const mesDepois = k => { const [a, m] = k.split("-").map(Number); return m === 12 ? (a + 1) + "-01" : a + "-" + pad(m + 1); };
+const doMes = (l, k) => (l.data || "").slice(0, 7) === k;
+const hojeISO = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+const dataCurta = d => (d || "").slice(8, 10) + "/" + (d || "").slice(5, 7);
+const diaSemana = d => { const [a, m, x] = (d || "").split("-").map(Number); return new Date(a, m - 1, x).getDay(); };
+const somaDias = (d, n) => { const [a, m, x] = d.split("-").map(Number); const t = new Date(a, m - 1, x + n); return t.getFullYear() + "-" + pad(t.getMonth() + 1) + "-" + pad(t.getDate()); };
+const valorNoMes = (g, k) => g.valores ? (Number(g.valores[k]) || 0) : 0;
+// fixo ou entrada que ainda vale neste mês: tem valor nele ou em algum mês depois (ou ainda não tem valor nenhum)
+const vale = (g, k) => !!g && (!g.valores || !Object.keys(g.valores).length || Object.keys(g.valores).some(m => m >= k && Number(g.valores[m]) > 0));
+const maiuscula = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+// valores em reais nos campos: só números, a vírgula anda sozinha (1025 vira 10,25), como no lançamento.
+// Campo de número do navegador não serve aqui: no iPhone a vírgula do teclado pode não ser aceita.
+const emReais = v => Number(v) > 0 ? FormLancamento.mascara((Number(v) || 0).toFixed(2)) : "";
+const deReais = s => FormLancamento.centavos(s);
+
+// ---------- contas ----------
+// A casa entra no mês dela só pelo que ela pagou na Casa no mês (Dono, 04/10/2026: "não vai
+// metade do valor da casa, vai apenas o que ela pagou"), como a linha Moradia da planilha dela.
+// Lido do caderno da Casa que a aba Casa mantém atualizado neste aparelho.
+function casaDoMes(k){
+  const c = lerLocal(CH_CASA);
+  if (!c || !Array.isArray(c.lancamentos)) return null;
+  const pessoas = c.pessoas || [];
+  const nome = (cad.nomeNaCasa && pessoas.includes(cad.nomeNaCasa)) ? cad.nomeNaCasa : (pessoas.find(p => /^ana/i.test(p)) || pessoas[1] || "");
+  const pagou = soma(c.lancamentos.filter(l => doMes(l, k) && l.quem === nome), l => l.valor);
+  return { nome, valor: pagou, pagou };
+}
+// o mês em que o dinheiro do plantão cai
+const mesQueCai = (local, kPlantao) => { const L = cad.locais.find(x => x.nome === local); return L && L.pagaMesSeguinte ? mesDepois(kPlantao) : kPlantao; };
+
+function entradas(k){
+  const fixas = cad.receitasFixas.map(r => ({ tipo:"fixa", id:r.id, rot:r.descricao, valor:valorNoMes(r, k) }));
+  const plantoes = cad.locais.map(L => {
+    const kp = L.pagaMesSeguinte ? mesAntes(k) : k;
+    const lst = cad.plantoes.filter(p => p.local === L.nome && p.realizar && doMes(p, kp));
+    return { tipo:"plantao", rot:L.nome, valor:soma(lst, p => p.valor), n:lst.length, de:kp };
+  });
+  const at = cad.atendimentos.filter(a => doMes(a, k));
+  const atend = { tipo:"atendimentos", rot:"Atendimentos particulares", valor:soma(at, a => a.valor), n:at.length };
+  return { fixas, plantoes, atend, total: soma(fixas, x => x.valor) + soma(plantoes, x => x.valor) + atend.valor };
+}
+function saidas(k){
+  const s = {};
+  cad.lancamentos.filter(l => doMes(l, k)).forEach(l => s[l.categoria] = (s[l.categoria] || 0) + (Number(l.valor) || 0));
+  const fixosMes = soma(cad.gastosFixos, g => valorNoMes(g, k));
+  cad.gastosFixos.forEach(g => { const v = valorNoMes(g, k); if (v) s[g.categoria] = (s[g.categoria] || 0) + v; });
+  const casa = casaDoMes(k);
+  if (casa && casa.valor) s["Moradia (casa)"] = (s["Moradia (casa)"] || 0) + casa.valor;
+  const lancado = soma(cad.lancamentos.filter(l => doMes(l, k)), l => l.valor);
+  return { porCat: Object.entries(s).filter(e => e[1] > 0.005).sort((a, b) => b[1] - a[1]), lancado, fixosMes, casa, total: soma(Object.values(s)) };
+}
+// o painel dos plantões feitos no mês (como a aba Controle de Plantões da planilha)
+function contasPlantoes(k){
+  const lst = cad.plantoes.filter(p => doMes(p, k));
+  const reg = lst.filter(p => p.tipo !== "Extra"), ext = lst.filter(p => p.tipo === "Extra");
+  const potencial = soma(reg, p => p.valor), naoVai = soma(reg.filter(p => !p.realizar), p => p.valor);
+  const extras = soma(ext.filter(p => p.realizar), p => p.valor);
+  return { lst, potencial, naoVai, extras, total: potencial - naoVai + extras, n: lst.filter(p => p.realizar).length, nTotal: lst.length };
+}
+
+// ---------- desenho ----------
+function barraMes(){
+  return `<div class="mes"><button class="b redondo" data-mes="-1" aria-label="Mês anterior">‹</button>
+    <h1>${MESES[ref.getMonth()]} <span>${ref.getFullYear()}</span></h1>
+    <button class="b redondo" data-mes="1" aria-label="Próximo mês">›</button></div>`;
+}
+function rosca(itens, centro, aria){
+  itens = itens.filter(x => x[1] > 0.005);
+  const total = soma(itens, x => x[1]);
+  if (!total) return `<p class="vazio">Nada neste mês.</p>`;
+  const R0 = 68, C = 2 * Math.PI * R0, gap = itens.length > 1 ? 2 : 0; let acum = 0;
+  const fatias = itens.map(([rot, v, cor], i) => {
+    const f = v / total, len = Math.max(0.5, f * C - gap);
+    const s = `<circle cx="85" cy="85" r="${R0}" fill="none" stroke="${cor}" stroke-width="24"
+      stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-acum).toFixed(2)}" transform="rotate(-90 85 85)">
+      <title>${escH(rot)}: ${dinheiro(v)} (${pctTxt(v, total)})</title></circle>`;
+    acum += f * C; return s;
+  }).join("");
+  const meio = `<text class="centro1" x="85" y="80" text-anchor="middle">${escH(centro)}</text>
+    <text class="centro2" x="85" y="100" text-anchor="middle">${redondo(total)}</text>`;
+  const leg = itens.map(([rot, v, cor]) => `<li><i style="background:${cor}"></i><span class="n">${escH(rot)}</span><b>${dinheiro(v)}</b><span class="pc">${pctTxt(v, total)}</span></li>`).join("");
+  return `<div class="rosca"><svg viewBox="0 0 170 170" role="img" aria-label="${escH(aria)}">${fatias}${meio}</svg><ul class="leg">${leg}</ul></div>`;
+}
+function roscaSaidas(s){
+  const cats = s.porCat;
+  if (!cats.length) return `<p class="vazio">Nada saiu em ${MESES[ref.getMonth()]}.</p>`;
+  const cabem = cats.length > 8 ? 7 : 8;
+  const itens = cats.slice(0, cabem).map(([k, v], i) => [comPonto(k), v, `var(--c${i + 1})`]);
+  const resto = cats.slice(cabem);
+  if (resto.length) itens.push(["Outros.", soma(resto, e => e[1]), "var(--c8)"]);
+  return rosca(itens, "sai", "Saídas do mês por categoria");
+}
+
+// quais locais pagam no mês seguinte: lido do caderno, para o nome dos lugares não ficar escrito aqui
+function notaMesSeguinte(){
+  const seg = cad.locais.filter(L => L.pagaMesSeguinte).map(L => escH(L.nome));
+  const lista = seg.length > 1 ? seg.slice(0, -1).join(", ") + " e " + seg[seg.length - 1] : seg[0];
+  return (seg.length ? `O plantão de ${lista} entra no mês seguinte ao que foi feito.` : "Nenhum local está marcado para pagar no mês seguinte.")
+    + ` Isso se marca para cada local em Plantões, "Valores e locais".`;
+}
+// "R$ X de entradas fixas, R$ X de plantões e R$ X de atendimentos": só as partes que existem
+function partesEntra(e){
+  const p = [[soma(e.fixas, x => x.valor), "de entradas fixas"], [soma(e.plantoes, x => x.valor), "de plantões"], [e.atend.valor, "de atendimentos"]]
+    .filter(([v]) => v > 0.005).map(([v, t]) => dinheiro(v) + " " + t);
+  return p.length ? (p.length > 1 ? p.slice(0, -1).join(", ") + " e " + p[p.length - 1] : p[0]) : "nada ainda";
+}
+function telaMes(){
+  const k = km(), e = entradas(k), s = saidas(k), sobra = e.total - s.total;
+  const passado = k < chaveMes(new Date());
+  const nome = MESES[ref.getMonth()];
+  // mês sem nada lançado: diz isso, em vez de "sobra R$ 0,00"
+  const ver = e.total < 0.005 && s.total < 0.005
+    ? `<div class="veredito"><b>Nada lançado ainda</b><p>Quando entrar um plantão, uma entrada ou um gasto de ${nome}, a conta do mês aparece aqui.</p></div>`
+    : sobra >= -0.005
+    ? `<div class="veredito pos"><b>${passado ? "Fechou positivo" : "Sobra no mês"}</b><p>${maiuscula(nome)} ${passado ? "terminou" : "fecha"} com ${dinheiro(sobra)} a mais do que saiu, se tudo cair como está aqui.</p></div>`
+    : `<div class="veredito neg"><b>${passado ? "Fechou negativo" : "Falta no mês"}</b><p>${maiuscula(nome)} ${passado ? "terminou" : "fecha"} em ${sinalDin(sobra)}: sai mais do que entra.</p></div>`;
+  const semCasa = !s.casa ? `<p class="aviso">O que você pagou na casa ainda não aparece: abra a aba <b>Casa</b> uma vez e toque em "Escolher o que foi compartilhado comigo".</p>` : "";
+
+  const linhasEnt = e.fixas.filter(x => vale(cad.receitasFixas.find(r => r.id === x.id), k)).map(x => `<tr><td class="c-desc"><b>${escH(comPonto(x.rot))}</b></td>
+      <td class="dir"><input type="text" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="—" class="val" data-receita="${escH(x.id)}" value="${emReais(x.valor)}" aria-label="${escH(x.rot)} em ${nome}"></td>
+      <td class="c-x"><button class="x" data-apagar="receitasFixas:${escH(x.id)}" aria-label="Apagar">×</button></td></tr>`).join("")
+    + e.plantoes.map(x => `<tr><td class="c-desc"><b>${escH(x.rot)}</b><small class="nota" style="display:block">${x.n ? (x.n > 1 ? x.n + " plantões" : "1 plantão") + " de " + nomeMes(x.de) : "nenhum plantão de " + nomeMes(x.de)}</small></td>
+      <td class="dir c-val">${x.valor ? dinheiro(x.valor) : "—"}</td><td></td></tr>`).join("")
+    + (e.atend.n ? `<tr><td class="c-desc"><b>${e.atend.rot}</b><small class="nota" style="display:block">${e.atend.n > 1 ? e.atend.n + " atendimentos pagos" : "1 atendimento pago"} em ${nome}</small></td>
+      <td class="dir c-val">${dinheiro(e.atend.valor)}</td><td></td></tr>` : "");
+  const formEnt = `<details class="novo"><summary>+ Nova entrada</summary><form class="linha" id="fReceita">
+    <div class="largo" style="grid-column:span 2"><label>Entrada</label><input name="descricao" placeholder="bolsa, salário" required></div>
+    <div><label>Valor</label><input name="valor" type="text" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00" required></div>
+    <div><label>Repete</label><select name="repete"><option value="ate-dez">deste mês até dezembro</option><option value="so">só neste mês</option></select></div>
+    <div><button class="b p" type="submit">Guardar</button></div></form></details>`;
+
+  const cp = contasPlantoes(k);
+  return barraMes() + `
+  <section class="painel"><h2>Situação do mês</h2>
+    <div class="situ">${ver}<div class="linha-k">
+      <div class="k"><span>Entra</span><b class="pos">${dinheiro(e.total)}</b><small>${partesEntra(e)}</small></div>
+      <div class="k"><span>Sai</span><b>${dinheiro(s.total)}</b><small>${dinheiro(s.lancado)} lançados, ${dinheiro(s.fixosMes)} de fixos${s.casa ? " e " + dinheiro(s.casa.valor) + " pagos na casa" : ""}</small></div>
+      <div class="k destaque"><span>Sobra</span><b class="${sobra < -0.005 ? "neg" : "pos"}">${sinalDin(sobra)}</b><small>entra menos sai</small></div>
+    </div></div>
+  </section>
+  <div class="duas">
+    <section class="painel"><h2>Entradas de ${nome}</h2>${formEnt}
+      <table class="t entradas"><tbody>${linhasEnt || `<tr><td class="vazio">Nenhuma entrada ainda.</td></tr>`}</tbody></table>
+      <p class="nota">${notaMesSeguinte()}</p></section>
+    <section class="painel"><h2>Para onde vai</h2>${semCasa}${roscaSaidas(s)}</section>
+  </div>
+  <section class="painel" style="margin-top:18px"><h2>Entra e sai, mês a mês<span class="dir">toque num mês para abrir</span></h2>
+    ${GraficoMeses.desenhar(GraficoMeses.meses(12, k).map(m => ({ k:m, entrou:entradas(m).total, saiu:saidas(m).total })), { aberto:k, entrou:"Entra", saiu:"Sai" })}</section>
+  <section class="painel" style="margin-top:18px"><h2>Plantões de ${nome}<span class="dir"><button class="b s" data-ir="plantoes">Ver plantões</button></span></h2>
+    <div class="stats" style="margin:0">
+      <div class="stat"><span>Plantões</span><b>${cp.n}</b><small>de ${cp.nTotal} marcados</small></div>
+      <div class="stat"><span>Valor dos plantões</span><b>${dinheiro(cp.total)}</b><small>feitos e a fazer, sem os desmarcados</small></div>
+      <div class="stat"><span>Não vai fazer</span><b>${dinheiro(cp.naoVai)}</b><small>regulares desmarcados</small></div>
+      <div class="stat"><span>Extras</span><b>${dinheiro(cp.extras)}</b><small>que vai fazer</small></div>
+    </div></section>`;
+}
+
+function telaPlantoes(){
+  const k = km(), nome = MESES[ref.getMonth()], cp = contasPlantoes(k);
+  const lst = cp.lst.slice().sort((a, b) => a.data.localeCompare(b.data));
+  const quando = [...new Set(lst.map(p => p.local))].map(l => {
+    const v = soma(lst.filter(p => p.local === l && p.realizar), p => p.valor);
+    return `<li><b>${escH(l)}</b>: ${dinheiro(v)} caem em ${nomeMes(mesQueCai(l, k))}</li>`;
+  }).join("");
+  const opLocais = cad.locais.map(L => `<option>${escH(L.nome)}</option>`).join("");
+  const form = cad.locais.length ? `<details class="novo" id="dPlantao"><summary>+ Novo plantão</summary><form class="linha" id="fPlantao" autocomplete="off">
+    <input type="hidden" name="id" value="">
+    <div><label>Data</label><input type="date" name="data" aria-label="Data" value="${k === chaveMes(new Date()) ? hojeISO() : k + "-01"}" required></div>
+    <div><label>Local</label><select name="local">${opLocais}</select></div>
+    <div><label>Período</label><select name="periodo">${PERIODOS.map(p => `<option>${p}</option>`).join("")}</select></div>
+    <div><label>Tipo</label><select name="tipo"><option>Regular</option><option>Extra</option></select></div>
+    <div><label>Valor</label><input name="valor" type="text" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00" required></div>
+    <div data-so-novo><label>Repetir por</label><select name="semanas">${[1,2,3,4,5,6,8,10,12].map(n => `<option value="${escH(n)}">${n === 1 ? "só este dia" : n + " semanas"}</option>`).join("")}</select></div>
+    <div><button class="b p" type="submit" data-botao-plantao>Lançar plantão</button></div>
+    <div class="hidden" data-so-editando><button class="b" type="button" data-cancelar="fPlantao">Cancelar</button></div></form></details>`
+    : `<p class="aviso">Cadastre primeiro um local em "Valores e locais", embaixo.</p>`;
+  const linhas = lst.map(p => {
+    const extra = p.tipo === "Extra";
+    return `<tr class="${p.realizar ? "" : "fora"}"><td class="c-data">${dataCurta(p.data)}<small>${DIAS_CURTOS[diaSemana(p.data)]}</small></td>
+      <td class="c-desc"><b>${escH(p.local)}</b><span class="so-cel">${escH(p.periodo)}${extra ? " · extra" : ""}</span></td>
+      <td class="c-cat">${escH(p.periodo)}</td><td class="c-forma"><span class="selo-b ${extra ? "extra" : ""}">${extra ? "Extra" : "Regular"}</span></td>
+      <td class="c-val dir">${dinheiro(p.valor)}</td>
+      <td><label class="vai" title="Vai fazer este plantão"><input type="checkbox" data-vai="${escH(p.id)}" ${p.realizar ? "checked" : ""}><span class="rot">vai fazer</span></label></td>
+      <td class="c-x"><button class="x lapis" data-editar-plantao="${escH(p.id)}" aria-label="Editar" title="Editar">✎</button><button class="x" data-apagar="plantoes:${escH(p.id)}" aria-label="Apagar" title="Apagar">×</button></td></tr>`;
+  }).join("");
+  const valores = `<details class="origem" id="dValores"><summary>Valores e locais</summary>
+    <p class="nota" style="margin:0 0 6px">No celular, deslize a tabela para o lado para ver os outros dias.</p>
+    <div class="rolar"><table class="t valores"><thead><tr><th>Local</th><th>Cai no mês seguinte</th>${DIAS_CURTOS.map(d => `<th class="dir">${d}</th>`).join("")}<th><span class="so-leitor">Ações</span></th></tr></thead><tbody>
+    ${cad.locais.map((L, i) => `<tr><td><b>${escH(L.nome)}</b></td>
+      <td><label class="vai"><input type="checkbox" data-paga="${i}" ${L.pagaMesSeguinte ? "checked" : ""}><span>sim</span></label></td>
+      ${DIAS_CURTOS.map((d, j) => `<td class="dir"><input type="text" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="—" class="val" data-tab="${i}:${j}" value="${emReais((cad.tabelaPlantao[L.nome] || {})[j])}" aria-label="${escH(L.nome)} ${d}"></td>`).join("")}
+      <td class="c-x"><button class="x" data-apagar-local="${i}" aria-label="Apagar local">×</button></td></tr>`).join("")}
+    </tbody></table></div>
+    <form class="linha" id="fLocal" style="margin-top:10px">
+      <div class="largo" style="grid-column:span 2"><label>Novo local</label><input name="nome" placeholder="hospital, clínica" required></div>
+      <div><label>Paga</label><select name="paga"><option value="0">no mesmo mês</option><option value="1">no mês seguinte</option></select></div>
+      <div><button class="b p" type="submit">Adicionar local</button></div></form>
+    <p>O valor de cada dia entra sozinho no plantão novo e pode ser trocado na hora. Mudar a tabela não muda os plantões já lançados.</p></details>`;
+  return barraMes() + `
+  <section class="painel"><h2>Plantões de ${nome}<span class="dir">${cp.n} de ${cp.nTotal} vão ser feitos</span></h2>
+    <div class="stats">
+      <div class="stat"><span>Regulares</span><b>${dinheiro(cp.potencial)}</b><small>se fizer todos</small></div>
+      <div class="stat"><span>Não vai fazer</span><b>${dinheiro(cp.naoVai)}</b><small>regulares desmarcados</small></div>
+      <div class="stat"><span>Extras</span><b>${dinheiro(cp.extras)}</b><small>que vai fazer</small></div>
+      <div class="stat"><span>Valor dos plantões</span><b class="pos">${dinheiro(cp.total)}</b><small>regulares menos os que não vai, mais extras</small></div>
+    </div>
+    ${quando ? `<ul class="nota" style="margin:0 0 12px;padding-left:18px">${quando}</ul>` : ""}
+    <div class="botoes-plantao">${form}${regras()}</div>
+    ${lst.length ? `<table class="t plantoes"><thead><tr><th>Dia</th><th>Local</th><th>Período</th><th>Tipo</th><th class="dir">Valor</th><th>Vai?</th><th><span class="so-leitor">Ações</span></th></tr></thead><tbody>${linhas}</tbody></table>`
+      : `<p class="vazio">Nenhum plantão em ${nome}.</p>`}
+    ${valores}
+  </section>`;
+}
+
+// ---------- plantões fixos (Dono, 04/10/2026) ----------
+// Cada regra diz onde, em que período, em que dia da semana e com que frequência ela dá plantão
+// ("toda sexta à noite no hospital X", "um sábado sim, outro não", "primeira sexta do mês").
+// "Lançar até" cria os plantões que faltam, do dia de hoje até o fim do mês escolhido, com o valor
+// da tabela do local (ou o da regra). Nunca lança duas vezes o mesmo dia, local e período, e nunca
+// mexe nos que já existem, nem nos desmarcados.
+const FREQS = [["toda","toda semana"],["alternada","semana sim, semana não"],["1","1ª do mês"],["2","2ª do mês"],["3","3ª do mês"],["4","4ª do mês"],["ultima","última do mês"]];
+const DIAS_PLURAL = ["domingos","segundas","terças","quartas","quintas","sextas","sábados"];
+function fraseRegra(g){
+  const dia = DIAS[g.dia], quando = g.quando === "toda" ? `tod${g.dia === 0 || g.dia === 6 ? "o" : "a"} ${dia}`
+    : g.quando === "alternada" ? `${DIAS_PLURAL[g.dia]} alternados, a partir de ${dataCurta(primeiroDaRegra(g))}`
+    : g.quando === "ultima" ? `últim${g.dia === 0 || g.dia === 6 ? "o" : "a"} ${dia} do mês`
+    : `${g.quando}ª ${dia} do mês`.replace(/ª (domingo|sábado)/, "º $1");
+  return `${escH(g.local)}, ${escH(String(g.periodo).toLowerCase())}, ${quando}`;
+}
+// a regra vale para esta data?
+function regraNoDia(g, iso){
+  if (diaSemana(iso) !== Number(g.dia)) return false;
+  if (g.inicio && iso < g.inicio) return false;
+  const dia = Number(iso.slice(8, 10));
+  if (g.quando === "toda") return true;
+  if (g.quando === "alternada") { const sem = Math.round((Date.parse(iso) - Date.parse(g.inicio)) / 864e5 / 7); return sem % 2 === 0; }
+  if (g.quando === "ultima") return Number(somaDias(iso, 7).slice(5, 7)) !== Number(iso.slice(5, 7));
+  return Math.floor((dia - 1) / 7) + 1 === Number(g.quando);
+}
+// o primeiro dia em que a regra vale, a partir do "a partir de"
+function primeiroDaRegra(g){
+  for (let d = g.inicio || hojeISO(), i = 0; i < 15; i++, d = somaDias(d, 1)) if (regraNoDia(g, d)) return d;
+  return g.inicio;
+}
+// o plantão apagado ou mudado de dia que veio de uma regra: a regra guarda o dia para não lançar de novo
+function pularNasRegras(p){
+  cad.regrasPlantao.forEach(g => {
+    if (g.local !== p.local || g.periodo !== p.periodo || !regraNoDia(g, p.data)) return;
+    g.pular = Array.isArray(g.pular) ? g.pular : [];
+    if (!g.pular.includes(p.data)) g.pular.push(p.data);
+  });
+}
+// os plantões que "Lançar até" criaria, sem gravar nada
+function plantoesDasRegras(ate){
+  const novos = [], existe = new Set(cad.plantoes.map(p => p.data + "|" + p.local + "|" + p.periodo));
+  const fim = ate + "-31";
+  for (let d = hojeISO(); d <= fim; d = somaDias(d, 1)) {
+    cad.regrasPlantao.forEach(g => {
+      if (!regraNoDia(g, d) || (Array.isArray(g.pular) && g.pular.includes(d))) return;
+      const chave = d + "|" + g.local + "|" + g.periodo; if (existe.has(chave)) return;
+      const valor = Number(g.valor) > 0 ? Number(g.valor) : Number((cad.tabelaPlantao[g.local] || {})[diaSemana(d)]) || 0;
+      existe.add(chave);
+      novos.push({ id:novoId(), data:d, periodo:g.periodo, local:g.local, tipo:"Regular", valor, realizar:true });
+    });
+  }
+  return novos;
+}
+let ultimosLancados = null;   // para o "Desfazer" logo depois de lançar pelas regras
+let ateEscolhido = null;      // o último "até" escolhido continua escolhido
+function regras(){
+  if (!cad.locais.length) return "";
+  const hoje = hojeISO(), anoQueVem = Number(hoje.slice(0, 4)) + 1;
+  const meses = []; for (let i = 0, k = hoje.slice(0, 7); i < 18; i++, k = mesDepois(k)) meses.push(k);
+  const padrao = ateEscolhido || anoQueVem + "-06";
+  const lista = cad.regrasPlantao.length
+    ? `<ul class="regras">${cad.regrasPlantao.map(g => `<li><span>${fraseRegra(g)}${Number(g.valor) > 0 ? ` · ${dinheiro(g.valor)}` : ""}</span><button class="x" data-apagar="regrasPlantao:${escH(g.id)}" aria-label="Apagar regra" title="Apagar regra">×</button></li>`).join("")}</ul>`
+    : `<p class="vazio">Nenhuma regra ainda. Exemplo: Hospital, noturno, toda sexta.</p>`;
+  const desfazer = ultimosLancados ? `<p class="aviso" style="background:var(--pos-soft)">${ultimosLancados.length} ${ultimosLancados.length === 1 ? "plantão lançado" : "plantões lançados"}. <button class="b s" type="button" id="desfazerRegras">Desfazer</button></p>` : "";
+  return `<details class="novo" id="dRegras"${ultimosLancados ? " open" : ""}><summary>↻ Plantões que se repetem</summary>
+    <p>Diga como os plantões se repetem e o app lança os que faltam, até o mês escolhido. Os que já estão lançados não mudam, e o que você apagar ou mudar de dia não volta.</p>
+    ${lista}
+    <form class="linha" id="fRegra" autocomplete="off" style="margin-top:10px">
+      <div><label>Local</label><select name="local">${cad.locais.map(L => `<option>${escH(L.nome)}</option>`).join("")}</select></div>
+      <div><label>Período</label><select name="periodo">${PERIODOS.map(p => `<option>${p}</option>`).join("")}</select></div>
+      <div><label>Dia</label><select name="dia">${DIAS.map((d, i) => `<option value="${i}">${d}</option>`).join("")}</select></div>
+      <div><label>Quando</label><select name="quando">${FREQS.map(([v, n]) => `<option value="${v}">${n}</option>`).join("")}</select></div>
+      <div><label>A partir de</label><input type="date" name="inicio" value="${hoje}" required></div>
+      <div><label>Valor (vazio = tabela)</label><input name="valor" type="text" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="da tabela"></div>
+      <div><button class="b p" type="submit">Guardar regra</button></div></form>
+    ${cad.regrasPlantao.length ? `<form class="linha" id="fLancarRegras" style="margin-top:10px">
+      <div class="largo"><label>Lançar os que faltam até</label><select name="ate">${meses.map(k => `<option value="${k}"${k === padrao ? " selected" : ""}>${nomeMes(k)} de ${k.slice(0, 4)}</option>`).join("")}</select></div>
+      <div><button class="b p" type="submit">Lançar</button></div></form>` : ""}
+    ${desfazer}</details>`;
+}
+
+// Atendimentos particulares (pedido dele, 03/10/2026): quem foi o paciente, quanto pagou e em que
+// dia pagou. Não é fixo: cada pagamento é uma linha, e entra nas entradas do mês em que foi pago.
+// Os nomes dos pacientes ficam só no caderno dela, no Drive; este arquivo não tem nenhum.
+function telaAtendimentos(){
+  const k = km(), nome = MESES[ref.getMonth()], ano = k.slice(0, 4);
+  const lst = cad.atendimentos.filter(a => doMes(a, k)).sort((a, b) => (b.data || "").localeCompare(a.data || "") || (a.paciente || "").localeCompare(b.paciente || "", "pt-BR"));
+  const doAno = cad.atendimentos.filter(a => (a.data || "").slice(0, 4) === ano);
+  const nomes = [...new Set(cad.atendimentos.map(a => a.paciente).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const porPac = {}; lst.forEach(a => { const p = porPac[a.paciente] = porPac[a.paciente] || { n:0, v:0 }; p.n++; p.v += Number(a.valor) || 0; });
+  const linhasPac = Object.entries(porPac).sort((a, b) => b[1].v - a[1].v).map(([n, x]) =>
+    `<tr><td class="c-desc"><b>${escH(n)}</b></td><td class="dir nota">${x.n > 1 ? x.n + " pagamentos" : "1 pagamento"}</td><td class="c-val dir">${dinheiro(x.v)}</td></tr>`).join("");
+  const form = `<form class="linha" id="fAtend" autocomplete="off">
+    <input type="hidden" name="id" value="">
+    <div class="largo" style="grid-column:span 2"><label>Paciente</label><input name="paciente" list="lista-pacientes" placeholder="nome do paciente" required></div>
+    <div><label>Valor pago</label><input name="valor" type="text" inputmode="numeric" autocomplete="off" placeholder="0,00" required data-dinheiro></div>
+    <div><label>Dia do pagamento</label><input type="date" name="data" value="${k === chaveMes(new Date()) ? hojeISO() : k + "-01"}" required></div>
+    <div><button class="b p" type="submit" data-botao-atend>Lançar</button></div>
+    <div class="hidden" data-so-editando><button class="b" type="button" data-cancelar="fAtend">Cancelar</button></div></form>
+    <datalist id="lista-pacientes">${nomes.map(n => `<option value="${escH(n)}"></option>`).join("")}</datalist>`;
+  const linhas = lst.map(a => `<tr><td class="c-data">${dataCurta(a.data)}<small>${DIAS_CURTOS[diaSemana(a.data)]}</small></td>
+    <td class="c-desc"><b>${escH(a.paciente)}</b></td>
+    <td class="c-val dir">${dinheiro(a.valor)}</td>
+    <td class="c-x"><button class="x lapis" data-editar-atend="${escH(a.id)}" aria-label="Editar" title="Editar">✎</button><button class="x" data-apagar="atendimentos:${escH(a.id)}" aria-label="Apagar" title="Apagar">×</button></td></tr>`).join("");
+  return barraMes() + `
+  <div class="duas larga">
+    <section class="painel"><h2>Atendimentos de ${nome}<span class="dir">${lst.length} no mês · ${dinheiro(soma(lst, a => a.valor))}</span></h2>
+      ${form}
+      ${lst.length ? `<table class="t atend" style="margin-top:12px"><thead><tr><th>Dia</th><th>Paciente</th><th class="dir">Valor</th><th><span class="so-leitor">Ações</span></th></tr></thead><tbody>${linhas}</tbody></table>`
+        : `<p class="vazio">Nenhum atendimento pago em ${nome}.</p>`}
+      <p class="nota">Cada pagamento entra nas entradas do mês em que foi pago. O nome que você já usou aparece sozinho ao começar a digitar.</p></section>
+    <section class="painel"><h2>Por paciente em ${nome}</h2>
+      ${linhasPac ? `<table class="t porpac"><tbody>${linhasPac}</tbody></table>` : `<p class="vazio">Nada neste mês.</p>`}
+      <div class="stats" style="margin:14px 0 0;grid-template-columns:repeat(2,minmax(0,1fr))">
+        <div class="stat"><span>No ano de ${ano}</span><b>${dinheiro(soma(doAno, a => a.valor))}</b><small>${doAno.length} ${doAno.length === 1 ? "pagamento" : "pagamentos"}</small></div>
+        <div class="stat"><span>Pacientes no ano</span><b>${new Set(doAno.map(a => a.paciente)).size}</b><small>nomes diferentes</small></div>
+      </div></section>
+  </div>`;
+}
+
+// Um botão só de lançamento, com a escolha dentro: Pessoal (este caderno) ou Casa (o caderno da
+// casa, que a aba Casa mantém aberto aqui dentro). Igual ao app dele (pedido dele, 01/10/2026).
+// O desenho e o comportamento moram em lancamento.js, o mesmo formulário do app dele.
+const casaFora = () => { try { return document.getElementById("q-casa").contentWindow.casaParaFora || null; } catch(e){ return null; } };
+function formLancamento(){ return `<div class="lanc" data-lanc="pessoal"></div>`; }
+function configLancamento(){
+  const cf = casaFora(), pessoas = cf ? cf.pessoas() : [];
+  const eu = (cad.nomeNaCasa && pessoas.includes(cad.nomeNaCasa)) ? cad.nomeNaCasa : (pessoas.find(p => /^ana/i.test(p)) || pessoas[1]);
+  const outro = pessoas.find(p => p !== eu) || "";
+  return {
+    tela: "gastos", padrao: "pessoal",
+    dataPadrao: km() === chaveMes(new Date()) ? hojeISO() : km() + "-01",
+    pessoal: { explica: "Só meu. Entra nos meus gastos.", tipos: null, grupos: [["", cad.categorias]], formas: FORMAS },
+    casa: cf ? { explica: `Da casa, dividido com ${String(outro).split(" ")[0]}. Entra na balança.`, pessoas, eu,
+                 grupos: cf.grupos ? cf.grupos() : [["", cf.categorias()]] } : null,
+    lancar(onde, d){
+      if (onde === "casa" && cf) {
+        const id = cf.lancar(d); desenhar();
+        return () => { cf.desfazer(id); desenhar(); };
+      }
+      const id = novoId();
+      cad.lancamentos.push({ id, data:d.data, descricao:d.descricao, categoria:d.categoria, forma:d.forma, valor:d.valor });
+      salvar();
+      return () => { cad.lancamentos = cad.lancamentos.filter(x => x.id !== id); salvar(); };
+    },
+    alterar(onde, id, d){
+      const l = cad.lancamentos.find(x => x.id === id); if (!l) return null;
+      const antes = JSON.parse(JSON.stringify(l));
+      Object.assign(l, { data:d.data, descricao:d.descricao, categoria:d.categoria, forma:d.forma, valor:d.valor });
+      salvar();
+      return () => { const i = cad.lancamentos.findIndex(x => x.id === id); if (i >= 0) cad.lancamentos[i] = antes; salvar(); };
+    },
+    // só os gastos dela se alteram por aqui; as compras da casa ficam na tela da Casa
+    apagar(onde, id){
+      const i = cad.lancamentos.findIndex(x => x.id === id); if (i < 0) return null;
+      const [tirado] = cad.lancamentos.splice(i, 1); salvar();
+      return () => { if (!cad.lancamentos.some(x => x.id === id)) cad.lancamentos.splice(Math.min(i, cad.lancamentos.length), 0, tirado); salvar(); };
+    }
+  };
+}
+
+// a ordem da lista de gastos: cabeçalho no computador, caixa de escolha no celular
+let ordem = { c:"data", d:-1 };
+const COLUNAS = [["data","Dia"],["descricao","Descrição"],["categoria","Categoria"],["forma","Forma"],["valor","Valor"]];
+// no mesmo dia, o lançado por último aparece primeiro (05/10/2026)
+function ordenar(lista){
+  const { c, d } = ordem, val = l => c === "valor" ? Number(l.valor) || 0 : String(l[c] || "");
+  return lista.map((l, i) => [l, i]).sort(([a, ia], [b, ib]) => {
+    const x = val(a), y = val(b);
+    const r = typeof x === "number" ? x - y : x.localeCompare(y, "pt-BR", { sensitivity:"base" });
+    return (r || (b.data || "").localeCompare(a.data || "") * d) * d || (c === "data" ? (ia - ib) * d : ib - ia);
+  }).map(([l]) => l);
+}
+function cabecalho(){
+  return `<thead><tr>${COLUNAS.map(([c, n]) => `<th${c === "valor" ? ' class="dir"' : ""}><button type="button" class="ord" data-ord="${c}" aria-pressed="${ordem.c === c}"
+    title="Ordenar por ${n.toLowerCase()}">${n}${ordem.c === c ? (ordem.d > 0 ? " ▲" : " ▼") : ""}</button></th>`).join("")}<th><span class="so-leitor">Ações</span></th></tr></thead>`;
+}
+function ordemCelular(){
+  const op = (c, d, n) => `<option value="${c}:${d}"${ordem.c === c && ordem.d === d ? " selected" : ""}>${n}</option>`;
+  return `<label class="ordem-cel">Ordenar por <select data-ordsel aria-label="Ordenar a lista">
+    ${op("data", -1, "mais recentes")}${op("data", 1, "mais antigos")}${op("valor", -1, "maior valor")}${op("valor", 1, "menor valor")}
+    ${op("descricao", 1, "descrição, de A a Z")}${op("categoria", 1, "categoria, de A a Z")}${op("forma", 1, "forma, de A a Z")}</select></label>`;
+}
+
+// Os fixos novos vão só até dezembro. Num mês sem nenhum fixo, se o mês anterior tinha, oferece
+// copiar os valores dele. Só preenche o mês vazio; nada do que já existe muda.
+const paraCopiar = (lista, k) => lista.filter(g => g.valores && Number(g.valores[mesAntes(k)]) > 0 && g.valores[k] === undefined);
+function copiaFixos(k){
+  if (cad.gastosFixos.concat(cad.receitasFixas).some(g => valorNoMes(g, k) > 0)) return "";
+  const n = paraCopiar(cad.gastosFixos, k).length + paraCopiar(cad.receitasFixas, k).length; if (!n) return "";
+  const ant = MESES[Number(mesAntes(k).slice(5, 7)) - 1];
+  return `<p class="aviso">Este mês ainda não tem fixos. ${n} ${n === 1 ? "vinha" : "vinham"} de ${ant}. <button class="b s p" type="button" id="copiarFixos">Copiar os fixos de ${ant}</button></p>`;
+}
+function telaGastos(){
+  const k = km(), nome = MESES[ref.getMonth()];
+  const lst = ordenar(cad.lancamentos.filter(l => doMes(l, k)));
+  const opCat = cad.categorias.map(c => `<option value="${escH(c)}">${escH(comPonto(c))}</option>`).join("");
+  const form = formLancamento(k);
+  const linhas = lst.map(l => `<tr><td class="c-data">${dataCurta(l.data)}</td>
+    <td class="c-desc"><b>${escH(comPonto(l.descricao || l.categoria))}</b><span class="so-cel">${escH(comPonto([l.descricao ? l.categoria : "", l.forma].filter(Boolean).join(" · ")))}</span></td>
+    <td class="c-cat">${escH(comPonto(l.categoria))}</td><td class="c-forma">${escH(comPonto(l.forma))}</td>
+    <td class="c-val dir">${dinheiro(l.valor)}</td>
+    <td class="c-x"><button class="x lapis" data-editar="${escH(l.id)}" aria-label="Editar" title="Editar">✎</button><button class="x" data-apagar="lancamentos:${escH(l.id)}" aria-label="Apagar" title="Apagar">×</button></td></tr>`).join("");
+  // o fixo tirado (ou que acabou antes deste mês) sai da lista; nos meses em que valia, continua aparecendo
+  const fixos = cad.gastosFixos.filter(g => vale(g, k)).sort((a, b) => valorNoMes(b, k) - valorNoMes(a, k));
+  const tFixos = fixos.length ? `<table class="t fixos"><thead><tr><th>Gasto</th><th>Categoria</th><th class="dir">Valor em ${nome}</th><th><span class="so-leitor">Ações</span></th></tr></thead><tbody>
+    ${fixos.map(g => `<tr><td class="c-desc"><b>${escH(comPonto(g.descricao))}</b><span class="so-cel">${escH(comPonto(g.categoria))}</span></td><td class="c-cat">${escH(comPonto(g.categoria))}</td>
+      <td class="dir"><input type="text" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="—" class="val" data-fixo="${escH(g.id)}" value="${emReais(valorNoMes(g, k))}" aria-label="${escH(g.descricao)} em ${nome}"></td>
+      <td class="c-x"><button class="x" data-apagar="gastosFixos:${escH(g.id)}" aria-label="Apagar">×</button></td></tr>`).join("")}</tbody></table>`
+    : `<p class="vazio">Nenhum gasto fixo.</p>`;
+  const formFixo = `<details class="novo"><summary>+ Novo gasto fixo</summary><form class="linha" id="fFixo">
+    <div class="largo" style="grid-column:span 2"><label>Gasto fixo</label><input name="descricao" placeholder="financiamento, conta" required></div>
+    <div><label>Categoria</label><select name="categoria">${opCat}</select></div>
+    <div><label>Valor por mês</label><input name="valor" type="text" inputmode="numeric" autocomplete="off" data-dinheiro placeholder="0,00" required></div>
+    <div><button class="b p" type="submit">Deste mês até dezembro</button></div></form></details>`;
+  const formCat = `<details class="origem"><summary>Categorias</summary><p>${cad.categorias.map(escH).join(", ")}.</p>
+    <form class="linha" id="fCategoria"><div class="largo" style="grid-column:span 2"><label>Nova categoria</label><input name="nome" required></div>
+    <div><button class="b p" type="submit">Adicionar</button></div></form></details>`;
+  return barraMes() + `
+  <div class="duas larga">
+    <section class="painel"><h2>Gastos de ${nome}<span class="dir">${lst.length} no mês · ${dinheiro(soma(lst, l => l.valor))}</span></h2>${form}
+      ${lst.length ? `${ordemCelular()}<table class="t gastos">${cabecalho()}<tbody>${linhas}</tbody></table>`
+        : `<p class="vazio">Nenhum gasto lançado em ${nome}.</p>`}${formCat}</section>
+    <section class="painel"><h2>Gastos fixos<span class="dir">${dinheiro(soma(fixos, g => valorNoMes(g, k)))} em ${nome}</span></h2>${copiaFixos(k)}${formFixo}${tFixos}</section>
+  </div>`;
+}
+
+function desenhar(){
+  document.querySelectorAll("#abas button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.a === aba)));
+  const naCasa = aba === "casa";
+  document.getElementById("conteudo").hidden = naCasa;
+  const f = document.getElementById("q-casa"); if (f) f.hidden = !naCasa;
+  if (naCasa) return;
+  const t = document.getElementById("tela");
+  const abertos = [...t.querySelectorAll("details")].map(x => x.open), mesma = t.dataset.aba === aba;
+  // redesenhar no meio de um lançamento (o Drive pode mandar) não apaga o que estava digitado
+  const digitado = {};
+  if (mesma) t.querySelectorAll("form[id]").forEach(f => { if (!f.dataset.limpo) digitado[f.getAttribute("id")] = [...f.elements].filter(e => e.name && (e.type !== "radio" || e.checked)).map(e => [e.name, e.value]); });
+  t.innerHTML = aba === "plantoes" ? telaPlantoes() : aba === "atendimentos" ? telaAtendimentos() : aba === "gastos" ? telaGastos() : telaMes();
+  t.dataset.aba = aba;
+  if (mesma) t.querySelectorAll("details").forEach((x, i) => { if (abertos[i]) x.open = true; });
+  for (const id in digitado) {
+    const f = document.getElementById(id); if (!f) continue;
+    digitado[id].forEach(([n, v]) => { const e = f.elements[n];
+      if (e && (e.tagName !== "SELECT" || [...e.options].some(o => o.value === v))) e.value = v; });
+  }
+  ligar();
+}
+
+// formulário que está alterando uma linha: botão diz "Guardar a alteração", aparece "Cancelar" e some o "Repetir por"
+function modoEdicao(f, sim, texto){
+  const b = f.querySelector("[type=submit]"); if (b && texto) b.textContent = texto;
+  f.querySelectorAll("[data-so-editando]").forEach(x => x.classList.toggle("hidden", !sim));
+  f.querySelectorAll("[data-so-novo]").forEach(x => x.classList.toggle("hidden", sim));
+}
+function ligar(){
+  document.querySelectorAll("[data-mes]").forEach(b => b.onclick = () => { ref.setMonth(ref.getMonth() + Number(b.dataset.mes)); desenhar(); });
+  document.querySelectorAll("[data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
+  document.querySelectorAll("[data-apagar]").forEach(b => b.onclick = () => {
+    const [lista, id] = b.dataset.apagar.split(":");
+    // × de gasto fixo ou de entrada fixa: tira deste mês em diante; os meses que já passaram continuam com o
+    // valor que tinham (como no app dele desde 06/10/2026). Antes apagava de todos os meses e o mês passado mudava.
+    if (lista === "gastosFixos" || lista === "receitasFixas") {
+      const g = cad[lista].find(x => x.id === id); if (!g) return;
+      const k = km(), nome = MESES[ref.getMonth()];
+      const antes = g.valores ? Object.keys(g.valores).filter(m => m < k && Number(g.valores[m]) > 0) : [];
+      if (antes.length) {
+        if (!confirm(`Tirar ${g.descricao} de ${nome} em diante? Os meses anteriores continuam com o valor que tinham.`)) return;
+        // zero neste mês (e não vazio) para o mês não oferecer "copiar do mês anterior" de volta
+        Object.keys(g.valores).forEach(m => { if (m > k) delete g.valores[m]; }); g.valores[k] = 0;
+      } else {
+        if (!confirm(`Apagar ${g.descricao}?`)) return;
+        cad[lista] = cad[lista].filter(x => x.id !== id);
+      }
+      salvar(); return;
+    }
+    if (!confirm("Apagar esta linha?")) return;
+    if (lista === "plantoes") { const p = cad.plantoes.find(x => x.id === id); if (p) pularNasRegras(p); }
+    cad[lista] = cad[lista].filter(x => x.id !== id); salvar();
+  });
+  const porValor = (sel, lista) => document.querySelectorAll(`[${sel}]`).forEach(i => i.onchange = () => {
+    const g = cad[lista].find(x => x.id === i.getAttribute(sel)); if (!g) return;
+    if (!g.valores) g.valores = {};
+    const n = deReais(i.value);
+    if (n > 0) g.valores[km()] = n; else delete g.valores[km()];
+    salvar();
+  });
+  porValor("data-fixo", "gastosFixos");
+  porValor("data-receita", "receitasFixas");
+  document.querySelectorAll("[data-vai]").forEach(i => i.onchange = () => {
+    const p = cad.plantoes.find(x => x.id === i.dataset.vai); if (p) { p.realizar = i.checked; salvar(); }
+  });
+  document.querySelectorAll("[data-paga]").forEach(i => i.onchange = () => { cad.locais[Number(i.dataset.paga)].pagaMesSeguinte = i.checked; salvar(); });
+  document.querySelectorAll("[data-tab]").forEach(i => i.onchange = () => {
+    const [li, dj] = i.dataset.tab.split(":").map(Number), L = cad.locais[li]; if (!L) return;
+    const t = cad.tabelaPlantao[L.nome] = cad.tabelaPlantao[L.nome] || {};
+    const n = deReais(i.value); if (n > 0) t[dj] = n; else delete t[dj];
+    salvar();
+  });
+  document.querySelectorAll("[data-apagar-local]").forEach(b => b.onclick = () => {
+    const L = cad.locais[Number(b.dataset.apagarLocal)]; if (!L) return;
+    if (cad.plantoes.some(p => p.local === L.nome)) { recado("Esse local tem plantões lançados: apague os plantões antes."); return; }
+    if (!confirm("Apagar o local " + L.nome + "?")) return;
+    cad.locais.splice(Number(b.dataset.apagarLocal), 1); delete cad.tabelaPlantao[L.nome]; salvar();
+  });
+
+  const pega = f => Object.fromEntries(new FormData(f));
+  // erro junto do campo: o texto fica no fim do formulário, o campo marcado e com o foco
+  const erroNoForm = (f, texto, campo) => {
+    delete f.dataset.limpo;
+    let e = f.querySelector(".form-erro");
+    if (!e) { e = document.createElement("p"); e.className = "form-erro"; e.setAttribute("role", "alert"); f.appendChild(e); }
+    e.textContent = texto;
+    const c = campo && f.querySelector(`[name="${campo}"]`);
+    if (c) { c.setAttribute("aria-invalid", "true"); c.focus(); c.addEventListener("input", () => { c.removeAttribute("aria-invalid"); e.textContent = ""; }, { once:true }); }
+  };
+  // depois de gravar, o formulário volta limpo e embaixo dele aparece "Salvo." por alguns segundos
+  const SALVO = { fPlantao:"Plantão salvo.", fRegra:"Regra salva.", fLocal:"Local salvo.", fFixo:"Salvo.", fReceita:"Entrada salva.", fAtend:"Atendimento salvo.", fCategoria:"Categoria criada." };
+  const liga = (id, fn) => { const f = document.getElementById(id); if (f) f.onsubmit = e => {
+    e.preventDefault(); const d = pega(f); f.dataset.limpo = "1"; fn(d, f);
+    if (f.dataset.limpo !== "1" || document.body.contains(f) || !SALVO[id]) return;
+    const novo = document.getElementById(id); if (!novo) return;
+    const m = document.createElement("p"); m.className = "salvo"; m.setAttribute("role", "status");
+    m.textContent = d.id ? "Alteração guardada." : SALVO[id];
+    novo.insertAdjacentElement("afterend", m);
+    setTimeout(() => m.remove(), 4000);
+  }; };
+  const ateDezembro = v => { const o = {}; for (let m = ref.getMonth(); m < 12; m++) o[ref.getFullYear() + "-" + pad(m + 1)] = v; return o; };
+
+  // o valor do plantão novo vem da tabela do local pelo dia da semana
+  // (o que ela já digitou não é trocado quando a tela se redesenha; só ao mudar o dia ou o local)
+  const fp = document.getElementById("fPlantao");
+  if (fp) {
+    const preencher = () => {
+      const t = cad.tabelaPlantao[fp.local.value] || {}, v = t[diaSemana(fp.data.value)];
+      if (v) fp.valor.value = emReais(v);
+    };
+    fp.data.onchange = preencher; fp.local.onchange = preencher;
+    if (!fp.valor.value && !fp.elements.id.value) preencher();
+  }
+  liga("fPlantao", (d, f) => {
+    const valor = deReais(d.valor);
+    if (!(valor > 0)) { erroNoForm(f, "Falta o valor.", "valor"); return; }
+    const p = d.id && cad.plantoes.find(x => x.id === d.id);
+    if (p) {
+      if (p.data !== d.data || p.local !== d.local || p.periodo !== d.periodo) pularNasRegras(p);
+      Object.assign(p, { data:d.data, periodo:d.periodo, local:d.local, tipo:d.tipo, valor });
+    }
+    else {
+      const n = Math.max(1, Math.min(Number(d.semanas) || 1, 26));
+      for (let i = 0; i < n; i++) cad.plantoes.push({ id:novoId(), data:somaDias(d.data, 7 * i), periodo:d.periodo, local:d.local,
+        tipo:d.tipo, valor, realizar:true });
+    }
+    salvar();
+  });
+  // o lápis do plantão abre o formulário com ele carregado; "vai fazer" continua como estava
+  document.querySelectorAll("[data-editar-plantao]").forEach(b => b.onclick = () => {
+    const p = cad.plantoes.find(x => x.id === b.dataset.editarPlantao), f = document.getElementById("fPlantao"); if (!p || !f) return;
+    const e = f.elements;
+    if (![...e.local.options].some(o => o.value === p.local)) e.local.insertAdjacentHTML("beforeend", `<option>${escH(p.local)}</option>`);
+    e.id.value = p.id; e.data.value = p.data; e.local.value = p.local; e.periodo.value = p.periodo; e.tipo.value = p.tipo || "Regular";
+    e.valor.value = emReais(p.valor);
+    modoEdicao(f, true, "Guardar a alteração");
+    document.getElementById("dPlantao").open = true;
+    f.scrollIntoView({ block:"center", behavior:"smooth" });
+  });
+  const fpe = document.getElementById("fPlantao");
+  if (fpe && fpe.elements.id.value) modoEdicao(fpe, true, "Guardar a alteração");
+  liga("fRegra", d => {
+    let inicio = d.inicio || hojeISO(); while (diaSemana(inicio) !== Number(d.dia)) inicio = somaDias(inicio, 1);
+    cad.regrasPlantao.push({ id:novoId(), local:d.local, periodo:d.periodo, dia:Number(d.dia), quando:d.quando, inicio, valor:deReais(d.valor) || 0 });
+    ultimosLancados = null; salvar();
+  });
+  liga("fLancarRegras", (d, f) => {
+    ateEscolhido = d.ate;
+    const novos = plantoesDasRegras(d.ate);
+    if (!novos.length) { erroNoForm(f, "Nenhum plantão novo: os dessas regras até " + nomeMes(d.ate) + " de " + d.ate.slice(0, 4) + " já estão lançados."); return; }
+    const semValor = novos.filter(p => !p.valor).length;
+    if (!confirm(`Lançar ${novos.length} ${novos.length === 1 ? "plantão" : "plantões"}, de ${dataCurta(novos[0].data)} até ${dataCurta(novos[novos.length - 1].data)}/${novos[novos.length - 1].data.slice(0, 4)}?`
+      + (semValor ? `\n\n${semValor} ficam sem valor: falta o valor desse dia na tabela do local.` : ""))) return;
+    cad.plantoes.push(...novos); ultimosLancados = novos.map(p => p.id); salvar();
+  });
+  const dr = document.getElementById("desfazerRegras");
+  if (dr) dr.onclick = () => { const ids = new Set(ultimosLancados || []); cad.plantoes = cad.plantoes.filter(p => !ids.has(p.id)); ultimosLancados = null; salvar(); };
+  liga("fLocal", d => {
+    const nome = d.nome.trim(); if (!nome || cad.locais.some(L => L.nome === nome)) return;
+    cad.locais.push({ nome, pagaMesSeguinte: d.paga === "1" }); salvar();
+    const v = document.getElementById("dValores"); if (v) v.open = true;
+  });
+  // o formulário único de lançamento (lancamento.js); o lápis de cada linha abre o lançamento para alterar
+  document.querySelectorAll("[data-lanc]").forEach(el => FormLancamento.montar(el, configLancamento()));
+  document.querySelectorAll("[data-editar]").forEach(b => b.onclick = () => {
+    const l = cad.lancamentos.find(x => x.id === b.dataset.editar); if (!l) return;
+    FormLancamento.editar(configLancamento(), "pessoal", l); desenhar();
+    const el = document.querySelector("[data-lanc]"); if (el) el.scrollIntoView({ block:"start", behavior:"smooth" });
+  });
+  document.querySelectorAll("[data-ord]").forEach(b => b.onclick = () => {
+    const c = b.dataset.ord;
+    ordem = ordem.c === c ? { c, d:-ordem.d } : { c, d: c === "data" || c === "valor" ? -1 : 1 };
+    desenhar();
+  });
+  document.querySelectorAll("[data-ordsel]").forEach(s => s.onchange = () => { const [c, d] = s.value.split(":"); ordem = { c, d:Number(d) }; desenhar(); });
+  GraficoMeses.ligar(document.getElementById("tela"), k => { ref = new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1, 1); desenhar(); });
+  const cf = document.getElementById("copiarFixos");
+  if (cf) cf.onclick = () => {
+    const k = km(), a = mesAntes(k);
+    paraCopiar(cad.gastosFixos, k).concat(paraCopiar(cad.receitasFixas, k)).forEach(g => { g.valores[k] = Number(g.valores[a]); });
+    salvar();
+  };
+  liga("fFixo", d => { cad.gastosFixos.push({ id:novoId(), descricao:d.descricao.trim(), categoria:d.categoria, valores:ateDezembro(deReais(d.valor)) }); salvar(); });
+  liga("fReceita", d => {
+    const v = deReais(d.valor);
+    cad.receitasFixas.push({ id:novoId(), descricao:d.descricao.trim(), valores: d.repete === "so" ? { [km()]: v } : ateDezembro(v) }); salvar();
+  });
+  // valor só com números: a vírgula anda sozinha (1025 vira 10,25), como no lançamento
+  document.querySelectorAll("[data-dinheiro]").forEach(i => i.oninput = () => { const v = FormLancamento.mascara(i.value); if (v !== i.value) i.value = v; });
+  const fa = document.getElementById("fAtend");
+  if (fa && fa.elements.id.value) modoEdicao(fa, true, "Guardar a alteração");
+  // "Cancelar" larga a alteração: o formulário volta vazio, para lançar um novo
+  document.querySelectorAll("[data-cancelar]").forEach(b => b.onclick = () => {
+    const f = document.getElementById(b.dataset.cancelar); if (!f) return;
+    f.dataset.limpo = "1"; desenhar();
+  });
+  // clicar num valor da tabela seleciona tudo, para digitar o novo por cima
+  document.querySelectorAll("input.val").forEach(i => i.onfocus = () => { try { i.select(); } catch(e){} });
+  liga("fAtend", (d, f) => {
+    const valor = FormLancamento.centavos(d.valor), paciente = d.paciente.trim().replace(/\s+/g, " ");
+    if (!paciente || !(valor > 0) || !d.data){ erroNoForm(f, !paciente ? "Falta o paciente." : !d.data ? "Falta o dia do pagamento." : "Falta o valor.", !paciente ? "paciente" : !d.data ? "data" : "valor"); return; }
+    const a = d.id && cad.atendimentos.find(x => x.id === d.id);
+    if (a) Object.assign(a, { paciente, valor, data:d.data });
+    else cad.atendimentos.push({ id:novoId(), paciente, valor, data:d.data });
+    salvar();
+  });
+  document.querySelectorAll("[data-editar-atend]").forEach(b => b.onclick = () => {
+    const a = cad.atendimentos.find(x => x.id === b.dataset.editarAtend), f = document.getElementById("fAtend"); if (!a || !f) return;
+    f.elements.id.value = a.id; f.elements.paciente.value = a.paciente; f.elements.data.value = a.data;
+    f.elements.valor.value = FormLancamento.mascara((Number(a.valor) || 0).toFixed(2));
+    modoEdicao(f, true, "Guardar a alteração");
+    f.scrollIntoView({ block:"center", behavior:"smooth" }); f.elements.valor.focus();
+  });
+  liga("fCategoria", d => { const n = d.nome.trim(); if (n && !cad.categorias.includes(n)) { cad.categorias.push(n); salvar(); } });
+}
+
+// recado na tela, no lugar da janelinha do navegador (19/10/2026)
+function recado(texto){
+  document.querySelectorAll(".recado").forEach(r => r.remove());
+  const r = document.createElement("div");
+  r.className = "recado"; r.setAttribute("role", "alert");
+  r.innerHTML = `<span></span><button type="button" aria-label="Fechar o recado">×</button>`;
+  r.firstChild.textContent = texto;
+  r.lastChild.onclick = () => r.remove();
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 10000);
+}
+
+// ---------- abas ----------
+function irPara(a){
+  aba = ["mes","plantoes","atendimentos","gastos","casa"].includes(a) ? a : "mes";
+  try { localStorage.setItem("cu-ana-aba", aba); history.replaceState(null, "", "#" + aba); } catch(e){}
+  if (aba === "casa") {
+    const f = document.getElementById("q-casa");
+    try { f.contentWindow.Nuvem.aoMostrar(); f.contentWindow.desenhar(); } catch(e){}
+  }
+  desenhar();
+  document.getElementById("conteudo").scrollTop = 0;
+}
+document.getElementById("abas").onclick = e => { const b = e.target.closest("[data-a]"); if (b) irPara(b.dataset.a); };
+
+// a Casa é a mesma página do app dele, só com o caderno da casa (app.html lê window.PERFIL)
+const quadroCasa = document.createElement("iframe");
+quadroCasa.id = "q-casa"; quadroCasa.title = "Casa"; quadroCasa.src = "app.html#casa"; quadroCasa.hidden = true;
+document.getElementById("palco").appendChild(quadroCasa);
+quadroCasa.addEventListener("load", () => { const t = document.documentElement.dataset.theme; if (t) try { quadroCasa.contentDocument.documentElement.setAttribute("data-theme", t); } catch(e){}
+  if (aba !== "casa") desenhar();   // só agora dá para oferecer a escolha "Casa" no lançamento
+});
+// quando a Casa grava, a parte dela no mês muda aqui também
+window.addEventListener("storage", e => {
+  const digitando = document.activeElement && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+  if (e.key === CH_CASA && !digitando && aba !== "casa") desenhar();
+});
+
+// ---------- tema ----------
+/* a barra do navegador (Android) acompanha o tema escolhido no app, não só o do aparelho (19/10/2026) */
+function barraDoTema(v){ document.querySelectorAll('meta[name="theme-color"]').forEach(function(m, i){ m.content = v === "light" ? "#5b2a82" : v === "dark" ? "#2c1840" : (i ? "#2c1840" : "#5b2a82"); }); }
+function aplicarTema(v){
+  document.documentElement.dataset.theme = v;
+  barraDoTema(v);
+  try { quadroCasa.contentDocument.documentElement.setAttribute("data-theme", v); } catch(e){}
+}
+document.getElementById("tema").onclick = () => {
+  const r = document.documentElement;
+  const escuro = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const v = escuro ? "light" : "dark";
+  aplicarTema(v);
+  try { localStorage.setItem("cu-painel-tema", v); localStorage.setItem("cu-tema", v); } catch(e){}
+};
+try { const t = localStorage.getItem("cu-painel-tema"); if (t) { document.documentElement.dataset.theme = t; barraDoTema(t); } } catch(e){}
+
+// ---------- planilha de volta ----------
+document.getElementById("exportar").onclick = () => {
+  const ano = ref.getFullYear(), meses = MESES.map((n, i) => ano + "-" + pad(i + 1)), Nomes = MESES.map(maiuscula);
+  const abas = [
+    { nome:"Lançamentos", linhas:[["Data","Descrição","Categoria","Forma de Pagamento","Valor"],
+      ...cad.lancamentos.slice().sort((a, b) => a.data.localeCompare(b.data)).map(l => [l.data, l.descricao, l.categoria, l.forma, l.valor])] },
+    { nome:"Gastos Fixos " + ano, linhas:[["Descrição","Categoria", ...Nomes], ...cad.gastosFixos.map(g => [g.descricao, g.categoria, ...meses.map(k => valorNoMes(g, k) || "-")])] },
+    { nome:"Entradas " + ano, linhas:[["Entrada", ...Nomes], ...cad.receitasFixas.map(r => [r.descricao, ...meses.map(k => valorNoMes(r, k) || "-")]),
+      ...cad.locais.map(L => [L.nome + (L.pagaMesSeguinte ? " (cai no mês seguinte)" : ""), ...meses.map(k => entradas(k).plantoes.find(p => p.rot === L.nome).valor || "-")]),
+      ["Atendimentos particulares", ...meses.map(k => entradas(k).atend.valor || "-")]] },
+    { nome:"Plantões", linhas:[["Data","Dia","Período","Local","Tipo","Valor","Vai fazer?","Cai em"],
+      ...cad.plantoes.slice().sort((a, b) => a.data.localeCompare(b.data)).map(p => [p.data, DIAS[diaSemana(p.data)], p.periodo, p.local, p.tipo, p.valor, p.realizar ? "Sim" : "Não", mesQueCai(p.local, p.data.slice(0, 7))])] },
+    { nome:"Atendimentos", linhas:[["Dia do pagamento","Paciente","Valor"],
+      ...cad.atendimentos.slice().sort((a, b) => a.data.localeCompare(b.data)).map(a => [a.data, a.paciente, a.valor])] },
+    { nome:"Valores dos plantões", linhas:[["Local","Cai no mês seguinte", ...DIAS_CURTOS], ...cad.locais.map(L => [L.nome, L.pagaMesSeguinte ? "Sim" : "Não", ...DIAS_CURTOS.map((d, j) => (cad.tabelaPlantao[L.nome] || {})[j] || "-")])] }
+  ];
+  baixar(xlsx(abas), `Controle da Pessoa 2 ${hojeISO()}.xlsx`);
+};
+
+// ---------- dados que chegam por link ----------
+// Para levar o controle a quem já criou um caderno vazio (30/09/2026): o link traz os dados
+// comprimidos no endereço, depois do #, que não vai para servidor nenhum. Quem abre toca em
+// "Trazer" e o caderno do Google dela recebe tudo; "com=" diz com quem compartilhar o caderno.
+const CH_COMPARTILHAR = "controle-unico-ana-compartilhar";
+async function lerPacote(txt){
+  const b64 = txt.replace(/-/g, "+").replace(/_/g, "/");
+  const bytes = Uint8Array.from(atob(b64 + "===".slice((b64.length + 3) % 4)), c => c.charCodeAt(0));
+  const fluxo = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return JSON.parse(await new Response(fluxo).text());
+}
+function tentarCompartilhar(){
+  let email = null; try { email = localStorage.getItem(CH_COMPARTILHAR); } catch(e){}
+  if (!email || !Nuvem.conectado() || !nuvem.arquivoId() || nuvem.pendente()) return;
+  nuvem.compartilharCom(email).then(() => {
+    try { localStorage.removeItem(CH_COMPARTILHAR); } catch(e){}
+    document.getElementById("chegou").innerHTML = `<p class="aviso" style="background:var(--pos-soft)">Pronto: o controle está no seu Google e compartilhado com ${escH(email)}.</p>`;
+  }).catch(() => {});
+}
+setInterval(tentarCompartilhar, 5000);
+(async () => {
+  const h = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+  const pacote = h.get("importar"); if (!pacote) return;
+  // o link pode pedir para compartilhar o controle com alguém: só vale um e-mail, e só depois de ela confirmar
+  const comBruto = (h.get("com") || "").trim();
+  const com = /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/.test(comBruto) ? comBruto : "";
+  try { history.replaceState(null, "", location.pathname + "#mes"); } catch(e){}
+  const caixa = document.getElementById("chegou");
+  let dados;
+  try { dados = await lerPacote(pacote); }
+  catch(e){ caixa.innerHTML = `<p class="aviso">Não consegui ler o link (${escH(e.message)}). Peça um link novo.</p>`; return; }
+  const n = (dados.plantoes || []).length, l = (dados.lancamentos || []).length;
+  caixa.innerHTML = `<p class="aviso">Chegou o controle com ${n} plantões e ${l} gastos. <button class="b s p" id="trazer" type="button">Trazer para o app</button></p>`;
+  document.getElementById("trazer").onclick = () => {
+    const temAlgo = cad.lancamentos.length || cad.plantoes.length || cad.gastosFixos.length;
+    if (temAlgo && !confirm("Isto troca o que já está no app pelo que chegou no link. Seguir?")) return;
+    const compartilhar = com && confirm(`O link também pede para compartilhar o seu controle com ${com}. Compartilhar?`);
+    ["plantoes","atendimentos","lancamentos","gastosFixos","receitasFixas","emprestimos"].forEach(k => (dados[k] || []).forEach(x => { if (!x.id) x.id = novoId(); }));
+    cad = arrumar(dados); salvar();
+    if (compartilhar) { try { localStorage.setItem(CH_COMPARTILHAR, com); } catch(e){} }
+    caixa.innerHTML = `<p class="aviso">Trazido. ${Nuvem.conectado() ? "Mandando para o seu Google…" : "Agora toque em <b>Entrar com o Google</b>, lá em cima, para guardar no seu Google."}</p>`;
+    setTimeout(tentarCompartilhar, 3000);
+  };
+})();
+
+// ---------- começo ----------
+{ let a = (location.hash || "").replace("#", ""); if (!a) { try { a = localStorage.getItem("cu-ana-aba") || "mes"; } catch(e){ a = "mes"; } } aba = ["mes","plantoes","atendimentos","gastos","casa"].includes(a) ? a : "mes"; }
+desenhar();
+// a barra ‹ mês › acompanha a rolagem: quando sai pelo alto, uma cópia pequena fica fixa logo abaixo da barra de cima (periodo-fixo.js)
+PeriodoFixo.iniciar(() => document.querySelectorAll("#tela .mes"), { topo: () => document.getElementById("conteudo").getBoundingClientRect().top });
+Nuvem.iniciar();
+Nuvem.entrarSozinho();   // no app do iPhone, quem já entrou antes volta a entrar sozinho
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
+</script>
+</body>
+</html>
