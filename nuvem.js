@@ -197,29 +197,8 @@ var Nuvem = (function(){
   function entrar(){
     aviso = null;
     if(!CLIENT_ID || !CHAVE_PICKER || !PROJETO){ avisoGeral("A conexão com seu Google Drive ainda está em preparação."); return; }
-    if(appNoIphone()){ entrarPorRedirecionamento(false); return; }
-    if(!(window.google && google.accounts && google.accounts.oauth2)){ avisoGeral("O Google ainda não carregou. Tente de novo em um segundo."); return; }
-    if(!cliente){
-      cliente = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID, scope: ESCOPO,
-        callback: function(resp){
-          if(resp.error){ avisoGeral("O Google recusou: " + resp.error); return; }
-          token = resp.access_token;
-          expira = Date.now() + (Number(resp.expires_in) || 3600) * 1000;
-          try{ sessionStorage.setItem(CH_TOKEN, JSON.stringify({t:token, e:expira})); }catch(e){}
-          guarda("controle-unico-ja-entrou", "1");
-          guarda("controle-unico-renovar-falhou", null);
-          vigiarValidade(); guardarConta();
-          espalhar();
-          cadernos.forEach(function(c){ c.conectar(); });
-          desenhar();
-        },
-        error_callback: function(e){ avisoGeral("A janela do Google foi fechada ou bloqueada (" + e.type + ")."); }
-      });
-    }
-    var pedido = le("controle-unico-ja-entrou") ? {prompt:""} : {};
-    if(le(CH_CONTA)) pedido.hint = le(CH_CONTA);
-    cliente.requestAccessToken(pedido);
+    // A mesma aba preserva o estado da autorização e funciona sem janelas pop-up.
+    entrarPorRedirecionamento(false);
   }
 
   /* ---------------- conversa com o Drive ---------------- */
