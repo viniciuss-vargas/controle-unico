@@ -5,7 +5,7 @@
    atualizando a cópia para a próxima vez). Nada do Google nem dos serviços de cotação passa por
    aqui, e os dados continuam no Drive e no navegador. O versao.json nunca é guardado: é ele que
    diz se saiu versão nova. */
-var CACHE = "controle-unico-vinicius-original-1";
+var CACHE = "controle-unico-20261025-original-5";
 var ESPERA = 3000;
 
 self.addEventListener("install", function(){ self.skipWaiting(); });

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<script src="config.js?v=20261025-original-4"></script>
+<script src="config.js?v=20261025-original-5"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Controle da Pessoa 2</title>
@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
-<link rel="stylesheet" href="tema.css?v=20261025-original-4">
+<link rel="stylesheet" href="tema.css?v=20261025-original-5">
 <style>
 /* toque: o navegador não espera para ver se é duplo toque, e o dedo acerta o alvo */
 button,a,summary,select,input,label{touch-action:manipulation}
@@ -242,12 +242,12 @@ ul.regras li:first-child{border-top:0} ul.regras li span{flex:1;min-width:0}
 </style>
 <script>window.PERFIL = "ana";   /* a Casa (app.html), carregada aqui dentro, lê isto e só abre o caderno da casa */</script>
 
-<script src="exportar-xlsx.js?v=20261025-original-4"></script>
-<script src="lancamento.js?v=20261025-original-4"></script>
-<script src="rotulos.js?v=20261025-original-4"></script>
-<script src="periodo-fixo.js?v=20261025-original-4"></script>
-<script src="grafico-meses.js?v=20261025-original-4"></script>
-<script src="nuvem.js?v=20261025-original-4"></script>
+<script src="exportar-xlsx.js?v=20261025-original-5"></script>
+<script src="lancamento.js?v=20261025-original-5"></script>
+<script src="rotulos.js?v=20261025-original-5"></script>
+<script src="periodo-fixo.js?v=20261025-original-5"></script>
+<script src="grafico-meses.js?v=20261025-original-5"></script>
+<script src="nuvem.js?v=20261025-original-5"></script>
 </head>
 <body>
 <header>
@@ -1012,7 +1012,7 @@ document.getElementById("abas").onclick = e => { const b = e.target.closest("[da
 
 // a Casa é a mesma página do app dele, só com o caderno da casa (app.html lê window.PERFIL)
 const quadroCasa = document.createElement("iframe");
-quadroCasa.id = "q-casa"; quadroCasa.title = "Casa"; quadroCasa.src = "app.html#casa"; quadroCasa.hidden = true;
+quadroCasa.id = "q-casa"; quadroCasa.title = "Casa"; quadroCasa.src = "app.html?v=20261025-original-5#casa"; quadroCasa.hidden = true;
 document.getElementById("palco").appendChild(quadroCasa);
 quadroCasa.addEventListener("load", () => { const t = document.documentElement.dataset.theme; if (t) try { quadroCasa.contentDocument.documentElement.setAttribute("data-theme", t); } catch(e){}
   if (aba !== "casa") desenhar();   // só agora dá para oferecer a escolha "Casa" no lançamento
