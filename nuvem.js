@@ -637,6 +637,8 @@ var Nuvem = (function(){
               {rotulo:"Escolher caderno no Drive", fn:escolherCompartilhado}]);
             return;
           }
+          // Módulo ainda sem dados não deve esconder o estado das finanças.
+          if(op.criarVazio === false && !op.temDados(local)){ estado(op.textoSemArquivo || "Caderno vazio: nenhum dado para enviar ao Drive.", "vazio"); return; }
           /* caderno de duas pessoas: antes de criar outro, pergunta se já existe um compartilhado */
           if(op.compartilhado){
             estado("Não achei " + op.nome + " neste Google.", "escolha", [
