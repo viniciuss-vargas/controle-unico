@@ -7,6 +7,8 @@
   const categoriaDe=r=>String(r.categoria||'').trim()||'Sem categoria';
   function paraOriginal(entrada){
     const c=F.validar(copiar(Array.isArray(entrada?.registros)?entrada:entrada?._fonte||vazio()));
+    // Remove apenas a projeção de tela que versões anteriores misturavam à fonte.
+    for(const campo of ['_fonte','lancamentos','gastosFixos','reserva','pendencias','limites','categoriasExtras'])delete c[campo];
     const o=c.organizacao||{};
     return {versao:1,caderno:'financas',_fonte:c,
       lancamentos:c.registros.filter(r=>!r.arquivado).map(r=>({id:r.id,data:dataDe(r),tipo:'Despesa',descricao:r.descricao,categoria:r.categoria,forma:r.pagamento,valor:r.valor,situacao:r.situacao,_financeiro:true})).concat(copiar(o.movimentos||[])),
@@ -34,6 +36,7 @@
     c.categorias=[...new Set([...(c.categorias||[]),...c.registros.map(r=>r.categoria).filter(Boolean),...(livro.categoriasExtras||[]).filter(x=>!x.oculta).map(x=>x.nome)])];
     return F.validar(c);
   }
+  const temDados=c=>!!(c&&(c.registros?.length||c.organizacao?.movimentos?.length||c.organizacao?.pendencias?.length||Object.keys(c.organizacao?.limites||{}).length||c.organizacao?.categoriasExtras?.length||Object.values(c.organizacao?.reserva||{}).some(Boolean)));
   const normalizar=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
   function filtrar(registros,f={}){
     const termo=normalizar(f.busca).trim();
@@ -51,6 +54,6 @@
     for(const r of registros.filter(r=>!r.arquivado)){const nome=categoriaDe(r);if(!grupos.has(nome))grupos.set(nome,[]);grupos.get(nome).push(r);}
     return [...grupos].map(([nome,lista])=>({nome,...totais(lista)})).sort((a,b)=>b.pago-a.pago||a.nome.localeCompare(b.nome,'pt-BR'));
   }
-  const api={vazio,paraOriginal,paraCaderno,dataDe,categoriaDe,filtrar,totais,porCategoria};
+  const api={vazio,temDados,paraOriginal,paraCaderno,dataDe,categoriaDe,filtrar,totais,porCategoria};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.FinancasOriginal=api;
 })(typeof window!=='undefined'?window:this);
